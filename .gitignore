@@ -94,3 +94,17 @@ LDDC-main/
 
 # VS Code
 .vscode/
+
+# Baseline Profiles
+*.dm
+app/release/baselineProfiles/
+
+# Release output metadata
+app/release/output-metadata.json
+
+# Kotlin error logs
+.kotlin/errors/
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
