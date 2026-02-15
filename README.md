@@ -70,7 +70,7 @@ app/src/main/java/com/example/lddc/
 | UI | PyQt6 | Jetpack Compose |
 | 本地歌曲匹配 | ✅ | ❌ |
 | 桌面歌词 | ✅ | ❌ |
-| 批量下载 | ✅ | 部分支持 |
+| 批量下载 | ✅ | ❌ |
 
 ## 构建
 
@@ -103,5 +103,7 @@ cd LDDC-Android
 - [Retrofit](https://square.github.io/retrofit/) - 网络库
 
 ## 免责声明
+本项目全程使用AI生成，不包含任何人工编写的代码。
+存在许多的BUG，可以在项目的Issues中反馈，不保证修复。
 
 本项目仅供学习交流使用，请勿用于商业用途。使用本项目产生的任何后果由使用者自行承担。
