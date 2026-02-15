@@ -51,9 +51,6 @@ captures/
 **/build/
 !src/**/build/
 
-# Local properties
-local.properties
-
 # Android
 *.apk
 *.ap_
@@ -64,14 +61,9 @@ gen/
 out/
 
 # Gradle files
-.gradle/
-build/
 
 # Android Studio
-.idea/
-*.iml
 .navigation/
-captures/
 output.json
 
 # NDK
