@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">LDDC</string>
+    
+    <!-- Source display names -->
+    <string name="source_multi">聚合</string>
+    <string name="source_qm">QQ音乐</string>
+    <string name="source_kg">酷狗音乐</string>
+    <string name="source_ne">网易云音乐</string>
+    <string name="source_lrclib">Lrclib</string>
+    <string name="source_local">本地</string>
+</resources>

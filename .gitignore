@@ -1,0 +1,96 @@
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# External native build folder generated in Android Studio 2.2 and later
+.externalNativeBuild
+.cxx/
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Android Studio captures folder
+captures/
+
+# IntelliJ
+*.ipr
+*.iws
+
+# Kotlin
+.kotlin/
+
+# Gradle
+.gradle
+**/build/
+!src/**/build/
+
+# Local properties
+local.properties
+
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
+
+# Android Studio
+.idea/
+*.iml
+.navigation/
+captures/
+output.json
+
+# NDK
+obj/
+
+# Python (from LDDC-main)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+
+# LDDC-main (PC version, not needed for Android)
+LDDC-main/
+
+# Trae IDE
+.trae/
+
+# VS Code
+.vscode/
