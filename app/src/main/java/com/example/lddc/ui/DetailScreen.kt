@@ -57,16 +57,16 @@ import com.example.lddc.service.LyricsOutputFormat
 import com.example.lddc.service.LyricsService
 import com.example.lddc.service.MusicFilterService
 import com.example.lddc.service.PlatformService
-import com.example.lddc.viewmodel.MusicSearchUseCase
+import com.example.lddc.viewmodel.MusicViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    musicSearchUseCase: MusicSearchUseCase,
+    viewModel: MusicViewModel,
     onBack: () -> Unit
 ) {
-    val selectedMusic by musicSearchUseCase.selectedMusic.collectAsState()
+    val selectedMusic by viewModel.selectedMusic.collectAsState()
 
     selectedMusic?.let { music ->
         val context = LocalContext.current

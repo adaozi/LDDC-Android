@@ -93,6 +93,12 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
 
+    // JAudioTagger for audio metadata
+    implementation(libs.jaudiotagger)
+
+    // DataStore for preferences
+    implementation(libs.androidx.datastore.preferences)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,6 +1,7 @@
 package com.example.lddc.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lddc.model.SearchFilters
 import com.example.lddc.service.PlatformService
-import com.example.lddc.viewmodel.MusicSearchUseCase
+import com.example.lddc.viewmodel.MusicViewModel
 
 /**
  * 搜索界面
@@ -56,17 +59,20 @@ import com.example.lddc.viewmodel.MusicSearchUseCase
  * - 搜索按钮
  * - 横屏时显示品牌区域和搜索区域并排
  * - 竖屏时显示居中搜索卡片
+ * - 本地音乐入口
  *
- * @param musicSearchUseCase 音乐搜索业务逻辑接口
+ * @param viewModel 音乐搜索ViewModel
  * @param onSearch 搜索回调，点击搜索或回车时触发
+ * @param onLocalMusicClick 本地音乐入口点击回调
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    musicSearchUseCase: MusicSearchUseCase,
-    onSearch: () -> Unit
+    viewModel: MusicViewModel,
+    onSearch: () -> Unit,
+    onLocalMusicClick: (() -> Unit)? = null
 ) {
-    val searchFilters by musicSearchUseCase.searchFilters.collectAsState()
+    val searchFilters by viewModel.searchFilters.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = androidx.compose.ui.platform.LocalContext.current
     val platformService = remember { PlatformService(context) }
@@ -83,10 +89,10 @@ fun SearchScreen(
             return
         }
         // 清空之前的筛选条件，只保留关键词
-        musicSearchUseCase.updateSearchFilters(
+        viewModel.updateSearchFilters(
             SearchFilters(keyword = trimmedInput)
         )
-        musicSearchUseCase.searchMusic()
+        viewModel.searchMusic()
         keyboardController?.hide()
         onSearch()
     }
@@ -114,7 +120,7 @@ fun SearchScreen(
                     // 右侧：搜索区域
                     SearchSection(
                         keyword = searchFilters.keyword,
-                        onKeywordChange = { musicSearchUseCase.updateSearchFilters(searchFilters.copy(keyword = it)) },
+                        onKeywordChange = { viewModel.updateSearchFilters(searchFilters.copy(keyword = it)) },
                         onSearch = { performSearch() },
                         modifier = Modifier.weight(1f)
                     )
@@ -135,10 +141,20 @@ fun SearchScreen(
 
                     SearchSection(
                         keyword = searchFilters.keyword,
-                        onKeywordChange = { musicSearchUseCase.updateSearchFilters(searchFilters.copy(keyword = it)) },
+                        onKeywordChange = { viewModel.updateSearchFilters(searchFilters.copy(keyword = it)) },
                         onSearch = { performSearch() },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // 本地音乐入口
+                    if (onLocalMusicClick != null) {
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        LocalMusicEntry(
+                            onClick = onLocalMusicClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -272,6 +288,61 @@ fun SearchSection(
                     fontWeight = FontWeight.Medium
                 )
             }
+        }
+    }
+}
+
+/**
+ * 本地音乐入口组件
+ */
+@Composable
+fun LocalMusicEntry(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.FolderOpen,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "本地音乐",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+
+                Text(
+                    text = "为本地音乐文件匹配歌词",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         }
     }
 }

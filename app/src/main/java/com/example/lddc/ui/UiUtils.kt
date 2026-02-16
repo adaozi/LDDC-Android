@@ -5,10 +5,13 @@ package com.example.lddc.ui
  */
 fun getPlatformDisplayName(platform: String): String {
     return when (platform) {
-        "QQ_MUSIC" -> "QQ音乐"
-        "NET_EASE" -> "网易云音乐"
-        "KUGOU" -> "酷狗音乐"
+        "QQ_MUSIC", "QM" -> "QQ音乐"
+        "NET_EASE", "NE" -> "网易云音乐"
+        "KUGOU", "KG" -> "酷狗音乐"
         "LRCLIB" -> "LyricLib"
+        "QQ音乐" -> "QQ音乐"
+        "网易云音乐" -> "网易云音乐"
+        "酷狗音乐" -> "酷狗音乐"
         else -> platform
     }
 }

@@ -80,7 +80,7 @@ dist/
 
 # LDDC-main (PC version, not needed for Android)
 LDDC-main/
-
+LDDC-Android-main/
 # Trae IDE
 .trae/
 

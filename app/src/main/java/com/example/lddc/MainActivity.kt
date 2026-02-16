@@ -7,7 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,11 +19,15 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.example.lddc.navigation.Screen
 import com.example.lddc.ui.DetailScreen
+import com.example.lddc.ui.LocalMusicDetailScreen
+import com.example.lddc.ui.LocalMusicListScreen
+import com.example.lddc.ui.LocalMusicSearchScreen
+import com.example.lddc.ui.LocalMusicSearchDetailScreen
 import com.example.lddc.ui.ResultsScreen
 import com.example.lddc.ui.SearchScreen
 import com.example.lddc.ui.theme.LDDCTheme
+import com.example.lddc.viewmodel.LocalMatchViewModel
 import com.example.lddc.viewmodel.MusicViewModel
-import com.example.lddc.viewmodel.MusicSearchUseCase
 
 /**
  * 主 Activity
@@ -72,29 +78,36 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
     }
 }
 
-@androidx.compose.runtime.Composable
-fun MusicApp(musicSearchUseCase: MusicSearchUseCase = androidx.lifecycle.viewmodel.compose.viewModel<MusicViewModel>()) {
+@Composable
+fun MusicApp(
+    musicViewModel: MusicViewModel = viewModel(),
+    localMatchViewModel: LocalMatchViewModel = viewModel()
+) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
         startDestination = Screen.SearchScreen.route
     ) {
+        // 网络搜索相关页面
         composable(Screen.SearchScreen.route) {
             SearchScreen(
-                musicSearchUseCase = musicSearchUseCase,
+                viewModel = musicViewModel,
                 onSearch = {
                     navController.navigate(Screen.ResultsScreen.route)
+                },
+                onLocalMusicClick = {
+                    navController.navigate(Screen.LocalMusicListScreen.route)
                 }
             )
         }
 
         composable(Screen.ResultsScreen.route) {
             ResultsScreen(
-                musicSearchUseCase = musicSearchUseCase,
+                viewModel = musicViewModel,
                 onBack = { navController.popBackStack() },
                 onMusicSelected = { music ->
-                    musicSearchUseCase.selectMusic(music)
+                    musicViewModel.selectMusic(music)
                     navController.navigate(Screen.DetailScreen.route)
                 }
             )
@@ -102,8 +115,57 @@ fun MusicApp(musicSearchUseCase: MusicSearchUseCase = androidx.lifecycle.viewmod
 
         composable(Screen.DetailScreen.route) {
             DetailScreen(
-                musicSearchUseCase = musicSearchUseCase,
+                viewModel = musicViewModel,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 本地音乐相关页面
+        composable(Screen.LocalMusicListScreen.route) {
+            LocalMusicListScreen(
+                viewModel = localMatchViewModel,
+                onBack = { navController.popBackStack() },
+                onMusicSelected = { music ->
+                    localMatchViewModel.selectLocalMusic(music)
+                    navController.navigate(Screen.LocalMusicDetailScreen.route)
+                }
+            )
+        }
+
+        composable(Screen.LocalMusicDetailScreen.route) {
+            LocalMusicDetailScreen(
+                viewModel = localMatchViewModel,
+                onBack = { navController.popBackStack() },
+                onSearchLyrics = {
+                    navController.navigate(Screen.LocalMusicSearchScreen.route)
+                }
+            )
+        }
+
+        composable(Screen.LocalMusicSearchScreen.route) {
+            LocalMusicSearchScreen(
+                viewModel = localMatchViewModel,
+                onBack = { navController.popBackStack() },
+                onMusicSelected = {
+                    // 进入搜索结果歌曲详情页
+                    navController.navigate(Screen.LocalMusicSearchDetailScreen.route)
+                }
+            )
+        }
+
+        composable(Screen.LocalMusicSearchDetailScreen.route) {
+            LocalMusicSearchDetailScreen(
+                viewModel = localMatchViewModel,
+                onBack = { navController.popBackStack() },
+                onUseLyrics = { lyrics ->
+                    // 写入歌词到本地音乐（使用转换后的歌词）
+                    localMatchViewModel.writeLyricsToLocalMusic(lyrics) { success ->
+                        if (success) {
+                            // 返回本地歌曲详情页
+                            navController.popBackStack(Screen.LocalMusicDetailScreen.route, false)
+                        }
+                    }
+                }
             )
         }
     }

@@ -72,25 +72,46 @@ class KugouApi(private val httpClient: HttpClient) {
 
     /**
      * 生成API签名
+     * 参考 PC 端实现：使用 json.dumps 处理字典类型参数
      */
     private fun generateSignature(params: Map<String, Any>, data: String = ""): String {
         val sortedParams = params.toSortedMap()
-        val paramStr = sortedParams.entries.joinToString("") { "${it.key}=${it.value}" }
+        val paramStr = sortedParams.entries.joinToString("") { (key, value) ->
+            val valueStr = when (value) {
+                is Map<*, *> -> kotlinx.serialization.json.Json.encodeToString(
+                    kotlinx.serialization.json.JsonObject.serializer(),
+                    value.entries.fold(kotlinx.serialization.json.JsonObject(emptyMap())) { acc, entry ->
+                        kotlinx.serialization.json.JsonObject(acc + (entry.key.toString() to kotlinx.serialization.json.JsonPrimitive(entry.value.toString())))
+                    }
+                )
+                else -> value.toString()
+            }
+            "${key}=${valueStr}"
+        }
         val content = "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA$paramStr$data" + "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA"
+        Log.d("KugouApi", "Signature content: $content")
         return NetworkModule.md5(content)
     }
     
     /**
      * 构建请求参数
+     * 参考 PC 端实现，Lyric 模块只需要 appid 和 clientver
      */
-    private fun buildParams(module: String, extraParams: Map<String, Any> = emptyMap()): Map<String, Any> {
-        val mid = NetworkModule.md5(System.currentTimeMillis().toString())
+    private fun buildParams(module: String, extraParams: Map<String, Any> = emptyMap(), mid: String): Map<String, Any> {
         val params = mutableMapOf<String, Any>()
 
         when (module) {
             "Lyric" -> {
                 params["appid"] = "3116"
                 params["clientver"] = "11070"
+            }
+            "album_song_list" -> {
+                params["dfid"] = "-"
+                params["appid"] = "3116"
+                params["mid"] = mid
+                params["clientver"] = "11070"
+                params["clienttime"] = NetworkModule.getCurrentTimestamp()
+                params["uuid"] = "-"
             }
             else -> {
                 params["userid"] = "0"
@@ -107,9 +128,6 @@ class KugouApi(private val httpClient: HttpClient) {
         }
 
         params.putAll(extraParams)
-
-        // 参考 PC 端，为所有模块添加 mid 和签名
-        // params["mid"] = mid  // PC 端在 headers 中添加 mid，不在 params 中
         params["signature"] = generateSignature(params)
 
         return params
@@ -117,15 +135,22 @@ class KugouApi(private val httpClient: HttpClient) {
 
     /**
      * 构建请求头部
+     * 参考 PC 端实现，在 headers 中添加 mid
      */
-    private fun buildHeaders(module: String): Map<String, String> {
-        return mutableMapOf(
+    private fun buildHeaders(module: String, mid: String): Map<String, String> {
+        val headers = mutableMapOf(
             "User-Agent" to "Android14-1070-11070-201-0-$module-wifi",
             "Connection" to "Keep-Alive",
             "KG-Rec" to "1",
             "KG-RC" to "1",
-            "KG-CLIENTTIMEMS" to NetworkModule.getCurrentTimestampMillis().toString()
+            "KG-CLIENTTIMEMS" to NetworkModule.getCurrentTimestampMillis().toString(),
+            "mid" to mid
         )
+        // album_song_list 模块需要添加 KG-TID 头
+        if (module == "album_song_list") {
+            headers["KG-TID"] = "221"
+        }
+        return headers
     }
     
     /**
@@ -138,25 +163,34 @@ class KugouApi(private val httpClient: HttpClient) {
         method: HttpMethod = HttpMethod.Get,
         data: String = ""
     ): Map<String, Any> = withContext(Dispatchers.IO) {
+        // 生成 mid 并构建参数和请求头
+        val mid = NetworkModule.md5(System.currentTimeMillis().toString())
+        val finalParams = buildParams(module, params, mid)
+        val headers = buildHeaders(module, mid)
+
+        Log.d("KugouApi", "Request URL: $url")
+        Log.d("KugouApi", "Request module: $module")
+        Log.d("KugouApi", "Request params: $finalParams")
+
         val response = if (method == HttpMethod.Get) {
             httpClient.get(url) {
                 headers {
-                    buildHeaders(module).forEach { (key, value) ->
+                    headers.forEach { (key, value) ->
                         append(key, value)
                     }
                 }
-                params.forEach { (key, value) ->
+                finalParams.forEach { (key, value) ->
                     parameter(key, value.toString())
                 }
             }
         } else {
             httpClient.post(url) {
                 headers {
-                    buildHeaders(module).forEach { (key, value) ->
+                    headers.forEach { (key, value) ->
                         append(key, value)
                     }
                 }
-                params.forEach { (key, value) ->
+                finalParams.forEach { (key, value) ->
                     parameter(key, value.toString())
                 }
                 setBody(data)
@@ -223,20 +257,20 @@ class KugouApi(private val httpClient: HttpClient) {
         page: Int = 1
     ): APIResultList<SongInfo> = withContext(Dispatchers.IO) {
         val pagesize = 20
-        
-        val params = buildParams(SEARCH_MODULE, mapOf(
+
+        // 直接传递额外参数，request 函数会调用 buildParams
+        val extraParams = mapOf(
             "sorttype" to "0",
             "keyword" to keyword,
             "pagesize" to pagesize,
-            "page" to page,
-            "iscorrection" to "1",
-            "uuid" to "-"
-        ))
-        
+            "page" to page
+        )
+
         try {
-            val data = request(SEARCH_URL, params, SEARCH_MODULE)
+            val data = request(SEARCH_URL, extraParams, SEARCH_MODULE)
             return@withContext processSearchResponse(data, page, pagesize)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.d("KugouApi", "Search failed, using old search: ${e.message}")
             // 使用备用API
             return@withContext oldSearch(keyword, page)
         }
@@ -321,27 +355,25 @@ class KugouApi(private val httpClient: HttpClient) {
         if (lyricsList.isEmpty()) {
             throw ApiException("未找到歌词")
         }
-        
+
         val lyricInfo = lyricsList[0]
         val accesskey = lyricInfo.accesskey ?: throw ApiException("未获取到歌词accesskey")
 
         Log.d("KugouApi", "Getting lyrics for song: ${songInfo.title}, lyric id: ${lyricInfo.id}, accesskey: $accesskey")
 
-        // 参考 PC 端实现，使用 buildParams 构建参数
-        val params = buildParams("Lyric", mapOf(
+        // 直接传递额外参数，request 函数会调用 buildParams
+        val extraParams = mapOf(
             "accesskey" to accesskey,
             "charset" to "utf8",
             "client" to "mobi",
             "fmt" to "krc",
             "id" to lyricInfo.id,
             "ver" to "1"
-        ))
-
-        Log.d("KugouApi", "Lyrics download params: $params")
+        )
 
         val response = request(
             "http://lyrics.kugou.com/download",
-            params,
+            extraParams,
             "Lyric"
         )
         
@@ -380,18 +412,19 @@ class KugouApi(private val httpClient: HttpClient) {
      * 获取歌词列表
      */
     suspend fun getLyricsList(songInfo: SongInfo): List<LyricInfo> = withContext(Dispatchers.IO) {
-        val params = buildParams("Lyric", mapOf(
+        // 直接传递额外参数，request 函数会调用 buildParams
+        val extraParams = mapOf(
             "album_audio_id" to songInfo.id,
-            "duration" to songInfo.duration.toString(),
+            "duration" to songInfo.duration,
             "hash" to (songInfo.hash ?: ""),
             "keyword" to "${songInfo.artist.name} - ${songInfo.title}",
             "lrctxt" to "1",
             "man" to "no"
-        ))
-        
+        )
+
         val response = request(
             "https://lyrics.kugou.com/v1/search",
-            params,
+            extraParams,
             "Lyric"
         )
         

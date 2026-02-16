@@ -67,7 +67,7 @@ import androidx.compose.runtime.setValue
  * - 下拉刷新和上拉加载更多
  * - 横竖屏自适应布局（横屏网格，竖屏列表）
  *
- * @param musicSearchUseCase 音乐搜索业务逻辑接口
+ * @param viewModel 音乐搜索ViewModel
  * @param onBack 返回回调
  * @param onMusicSelected 歌曲选中回调
  */
@@ -86,18 +86,18 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.lddc.model.Music
 import com.example.lddc.service.MusicFilterService
-import com.example.lddc.viewmodel.MusicSearchUseCase
+import com.example.lddc.viewmodel.MusicViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsScreen(
-    musicSearchUseCase: MusicSearchUseCase,
+    viewModel: MusicViewModel,
     onBack: () -> Unit,
     onMusicSelected: (Music) -> Unit
 ) {
-    val searchResults by musicSearchUseCase.searchResults.collectAsState()
-    val searchFilters by musicSearchUseCase.searchFilters.collectAsState()
-    val isLoading by musicSearchUseCase.isLoading.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val searchFilters by viewModel.searchFilters.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     var showFilterDialog by remember { mutableStateOf(false) }
 
     val filterService = remember { MusicFilterService() }
@@ -187,8 +187,8 @@ fun ResultsScreen(
                         }
                     }
                 } else {
-                    val isLoadingMore by musicSearchUseCase.isLoadingMore.collectAsState()
-                    val hasMoreData by musicSearchUseCase.hasMoreData.collectAsState()
+                    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+                    val hasMoreData by viewModel.hasMoreData.collectAsState()
 
                     // 筛选后如果没有结果，不显示加载更多
                     // 只要有筛选结果且还有更多数据，就允许加载更多
@@ -229,7 +229,7 @@ fun ResultsScreen(
 
                                     // 同时满足：滑到底部 + 正在滑动
                                     if (isNearBottom && isScrolling) {
-                                        musicSearchUseCase.loadMore()
+                                        viewModel.loadMore()
                                     }
                                 }
                         }
@@ -256,7 +256,7 @@ fun ResultsScreen(
                                     LoadMoreIndicator(
                                         isLoading = isLoadingMore,
                                         hasMoreData = effectiveHasMoreData,
-                                        onClick = { musicSearchUseCase.loadMore() }
+                                        onClick = { viewModel.loadMore() }
                                     )
                                 }
                             }
@@ -296,7 +296,7 @@ fun ResultsScreen(
 
                                     // 同时满足：滑到底部 + 正在滑动
                                     if (isNearBottom && isScrolling) {
-                                        musicSearchUseCase.loadMore()
+                                        viewModel.loadMore()
                                     }
                                 }
                         }
@@ -321,7 +321,7 @@ fun ResultsScreen(
                                     LoadMoreIndicator(
                                         isLoading = isLoadingMore,
                                         hasMoreData = effectiveHasMoreData,
-                                        onClick = { musicSearchUseCase.loadMore() }
+                                        onClick = { viewModel.loadMore() }
                                     )
                                 }
                             }
@@ -335,7 +335,7 @@ fun ResultsScreen(
             FilterDialog(
                 searchFilters = searchFilters,
                 onFiltersChanged = { newFilters ->
-                    musicSearchUseCase.updateSearchFilters(newFilters)
+                    viewModel.updateSearchFilters(newFilters)
                 },
                 onDismiss = { showFilterDialog = false }
             )
@@ -467,9 +467,12 @@ fun MusicCard(
 @SuppressLint("DefaultLocale")
 fun formatDuration(duration: String): String {
     return try {
-        val seconds = duration.toInt()
-        val minutes = seconds / 60
-        val remainingSeconds = seconds % 60
+        // duration 可能是毫秒（从 SongInfo 转换而来）或秒
+        val durationMs = duration.toLong()
+        // 如果大于 10000，认为是毫秒，转换为秒
+        val totalSeconds = if (durationMs > 10000) durationMs / 1000 else durationMs
+        val minutes = totalSeconds / 60
+        val remainingSeconds = totalSeconds % 60
         String.format("%d:%02d", minutes, remainingSeconds)
     } catch (_: NumberFormatException) {
         duration

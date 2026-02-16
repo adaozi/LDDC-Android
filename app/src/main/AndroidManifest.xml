@@ -6,6 +6,21 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- 存储权限 - 用于读取本地音乐文件 -->
+    <!-- Android 13+ (API 33+) 使用新的媒体权限 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Android 12 及以下使用存储权限 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- 写入外部存储（用于保存歌词文件，Android 10 及以下） -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:ignore="ScopedStorage" />
+
+    <!-- 媒体文件管理权限（Android 11+） -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
