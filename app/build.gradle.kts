@@ -112,8 +112,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("androidx.test:core:1.5.0")
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.core)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
 }

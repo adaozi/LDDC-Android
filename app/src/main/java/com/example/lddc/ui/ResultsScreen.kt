@@ -147,7 +147,7 @@ fun ResultsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showFilterDialog = true }) {
+                    IconButton(onClick = { }) {
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = "筛选",
@@ -205,7 +205,7 @@ fun ResultsScreen(
 
                     // 筛选后如果没有结果，不显示加载更多
                     // 只要有筛选结果且还有更多数据，就允许加载更多
-                    val effectiveHasMoreData = hasMoreData && filteredResults.isNotEmpty()
+                    val effectiveHasMoreData = hasMoreData
 
                     if (isLandscape) {
                         // 横屏：网格布局
@@ -350,7 +350,7 @@ fun ResultsScreen(
                 onFiltersChanged = { newFilters ->
                     viewModel.updateSearchFilters(newFilters)
                 },
-                onDismiss = { showFilterDialog = false }
+                onDismiss = { }
             )
         }
     }
