@@ -86,7 +86,7 @@ LDDC-Android-main/
 
 # VS Code
 .vscode/
-
+app/release/
 # Baseline Profiles
 *.dm
 app/release/baselineProfiles/

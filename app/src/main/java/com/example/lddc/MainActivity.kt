@@ -28,6 +28,8 @@ import com.example.lddc.ui.SearchScreen
 import com.example.lddc.ui.theme.LDDCTheme
 import com.example.lddc.viewmodel.LocalMatchViewModel
 import com.example.lddc.viewmodel.MusicViewModel
+import org.jaudiotagger.tag.TagOptionSingleton
+import java.nio.charset.Charset
 
 /**
  * 主 Activity
@@ -36,6 +38,31 @@ import com.example.lddc.viewmodel.MusicViewModel
  * 限制图片缓存大小：内存缓存 20MB，磁盘缓存 5MB
  */
 class MainActivity : ComponentActivity(), ImageLoaderFactory {
+
+    init {
+        // 初始化 JAudioTagger 编码设置
+        initJAudioTagger()
+    }
+
+    companion object {
+        /**
+         * 初始化 JAudioTagger 编码设置
+         * 确保正确处理 UTF-8 编码的歌词
+         */
+        private fun initJAudioTagger() {
+            try {
+                val tagOptions = TagOptionSingleton.getInstance()
+                tagOptions.isAndroid = true
+                tagOptions.isWriteMp3GenresAsText = true
+                // 设置 ID3 标签使用 UTF-8 编码
+                tagOptions.id3v23DefaultTextEncoding = 1 // UTF-8
+                tagOptions.id3v24DefaultTextEncoding = 1 // UTF-8
+                android.util.Log.d("MainActivity", "JAudioTagger 编码设置完成")
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "JAudioTagger 初始化失败", e)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 切换到正常主题
