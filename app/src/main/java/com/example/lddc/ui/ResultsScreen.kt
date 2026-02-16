@@ -1,13 +1,12 @@
 package com.example.lddc.ui
 
-import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -34,14 +32,10 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -49,11 +43,30 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.lddc.model.Music
+import com.example.lddc.ui.components.FilterDialog
+import com.example.lddc.ui.components.LoadMoreIndicator
+import com.example.lddc.utils.FormatUtils
+import com.example.lddc.utils.PlatformUtils
+import com.example.lddc.viewmodel.MusicViewModel
 
 /**
  * 搜索结果界面
@@ -71,23 +84,6 @@ import androidx.compose.runtime.setValue
  * @param onBack 返回回调
  * @param onMusicSelected 歌曲选中回调
  */
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import com.example.lddc.model.Music
-import com.example.lddc.service.MusicFilterService
-import com.example.lddc.viewmodel.MusicViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsScreen(
@@ -100,8 +96,18 @@ fun ResultsScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     var showFilterDialog by remember { mutableStateOf(false) }
 
-    val filterService = remember { MusicFilterService() }
-    val filteredResults = filterService.filterMusic(searchResults, searchFilters)
+    // 使用 remember 和 derivedStateOf 实现响应式筛选
+    val filteredResults: List<Music> by remember(searchResults, searchFilters) {
+        derivedStateOf<List<Music>> {
+            viewModel.getFilteredResults()
+        }
+    }
+
+    // 添加日志追踪
+    LaunchedEffect(searchResults, filteredResults, isLoading, searchFilters) {
+        Log.d("ResultsScreen", "状态更新 - searchResults: ${searchResults.size}, filteredResults: ${filteredResults.size}, isLoading: $isLoading")
+        Log.d("ResultsScreen", "筛选条件 - keyword: '${searchFilters.keyword}', songName: '${searchFilters.songName}', artist: '${searchFilters.artist}', album: '${searchFilters.album}', duration: '${searchFilters.duration}', platforms: ${searchFilters.platforms}")
+    }
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
@@ -179,8 +185,15 @@ fun ResultsScreen(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            // 判断是否有真正的筛选条件（不包括keyword）
+                            val hasFilterConditions = searchFilters.songName.isNotBlank() ||
+                                    searchFilters.artist.isNotBlank() ||
+                                    searchFilters.album.isNotBlank() ||
+                                    searchFilters.duration.isNotBlank() ||
+                                    searchFilters.platforms.isNotEmpty()
+
                             Text(
-                                text = if (searchFilters.keyword.isEmpty()) "暂无搜索结果" else "筛选后无结果",
+                                text = if (hasFilterConditions) "筛选后无结果" else "暂无搜索结果",
                                 fontSize = 18.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -445,7 +458,7 @@ fun MusicCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = getPlatformDisplayName(music.platform),
+                            text = PlatformUtils.getShortName(music.platform),
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -454,7 +467,7 @@ fun MusicCard(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = formatDuration(music.duration),
+                        text = FormatUtils.formatDuration(music.duration),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
@@ -463,175 +476,3 @@ fun MusicCard(
         }
     }
 }
-
-@SuppressLint("DefaultLocale")
-fun formatDuration(duration: String): String {
-    return try {
-        // duration 可能是毫秒（从 SongInfo 转换而来）或秒
-        val durationMs = duration.toLong()
-        // 如果大于 10000，认为是毫秒，转换为秒
-        val totalSeconds = if (durationMs > 10000) durationMs / 1000 else durationMs
-        val minutes = totalSeconds / 60
-        val remainingSeconds = totalSeconds % 60
-        String.format("%d:%02d", minutes, remainingSeconds)
-    } catch (_: NumberFormatException) {
-        duration
-    }
-}
-
-/**
- * 加载更多指示器组件
- */
-@Composable
-fun LoadMoreIndicator(
-    isLoading: Boolean,
-    hasMoreData: Boolean,
-    onClick: () -> Unit = {}
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .clickable(enabled = hasMoreData && !isLoading, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        when {
-            isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
-                )
-            }
-            hasMoreData -> {
-                Text(
-                    text = "点击加载更多",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            else -> {
-                Text(
-                    text = "已加载全部",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun FilterDialog(
-    searchFilters: com.example.lddc.model.SearchFilters,
-    onFiltersChanged: (com.example.lddc.model.SearchFilters) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var tempFilters by remember { mutableStateOf(searchFilters) }
-
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("筛选条件") },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                // 歌曲名筛选
-                OutlinedTextField(
-                    value = tempFilters.songName,
-                    onValueChange = { tempFilters = tempFilters.copy(songName = it) },
-                    label = { Text("歌曲名") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 作者筛选
-                OutlinedTextField(
-                    value = tempFilters.artist,
-                    onValueChange = { tempFilters = tempFilters.copy(artist = it) },
-                    label = { Text("作者") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 专辑筛选
-                OutlinedTextField(
-                    value = tempFilters.album,
-                    onValueChange = { tempFilters = tempFilters.copy(album = it) },
-                    label = { Text("专辑") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 平台筛选（下拉菜单）
-                var platformExpanded by remember { mutableStateOf(false) }
-                val platformOptions = listOf(
-                    "全部平台" to emptySet<String>(),
-                    "QQ音乐" to setOf("QM"),
-                    "网易云音乐" to setOf("NE"),
-                    "酷狗音乐" to setOf("KG")
-                )
-                val selectedPlatformLabel = platformOptions.find { it.second == tempFilters.platforms }?.first ?: "全部平台"
-
-                ExposedDropdownMenuBox(
-                    expanded = platformExpanded,
-                    onExpandedChange = { platformExpanded = it },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedTextField(
-                        value = selectedPlatformLabel,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("平台筛选") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = platformExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = platformExpanded,
-                        onDismissRequest = { platformExpanded = false }
-                    ) {
-                        platformOptions.forEach { (label, platforms) ->
-                            DropdownMenuItem(
-                                text = { Text(label) },
-                                onClick = {
-                                    tempFilters = tempFilters.copy(platforms = platforms)
-                                    platformExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            androidx.compose.material3.TextButton(
-                onClick = {
-                    onFiltersChanged(tempFilters)
-                    onDismiss()
-                }
-            ) {
-                Text("确定")
-            }
-        },
-        dismissButton = {
-            androidx.compose.material3.TextButton(
-                onClick = onDismiss
-            ) {
-                Text("取消")
-            }
-        }
-    )
-}
-
-

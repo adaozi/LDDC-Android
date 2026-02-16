@@ -1,30 +1,24 @@
 package com.example.lddc.ui
 
+import com.example.lddc.utils.PlatformUtils
+import com.example.lddc.utils.LyricsUtils
+
 /**
  * 获取平台显示名称
+ *
+ * @deprecated 请使用 PlatformUtils.getDisplayName()
  */
+@Deprecated("请使用 PlatformUtils.getDisplayName()", ReplaceWith("PlatformUtils.getDisplayName(platform)"))
 fun getPlatformDisplayName(platform: String): String {
-    return when (platform) {
-        "QQ_MUSIC", "QM" -> "QQ音乐"
-        "NET_EASE", "NE" -> "网易云音乐"
-        "KUGOU", "KG" -> "酷狗音乐"
-        "LRCLIB" -> "LyricLib"
-        "QQ音乐" -> "QQ音乐"
-        "网易云音乐" -> "网易云音乐"
-        "酷狗音乐" -> "酷狗音乐"
-        else -> platform
-    }
+    return PlatformUtils.getDisplayName(platform)
 }
 
 /**
  * 获取歌词类型显示名称
+ *
+ * @deprecated 请使用 LyricsUtils.getTypeDisplay()
  */
+@Deprecated("请使用 LyricsUtils.getTypeDisplay()", ReplaceWith("LyricsUtils.getTypeDisplay(type)"))
 fun getLyricsTypeDisplay(type: String): String {
-    return when (type) {
-        "QRC" -> "逐字歌词 (QRC)"
-        "KRC" -> "逐字歌词 (KRC)"
-        "YRC" -> "逐字歌词 (YRC)"
-        "LRC" -> "逐行歌词 (LRC)"
-        else -> type
-    }
+    return LyricsUtils.getTypeDisplay(type)
 }

@@ -1,5 +1,6 @@
 package com.example.lddc.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,9 +35,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -72,7 +74,6 @@ fun SearchScreen(
     onSearch: () -> Unit,
     onLocalMusicClick: (() -> Unit)? = null
 ) {
-    val searchFilters by viewModel.searchFilters.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = androidx.compose.ui.platform.LocalContext.current
     val platformService = remember { PlatformService(context) }
@@ -81,17 +82,22 @@ fun SearchScreen(
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
+    // 使用独立的本地状态管理输入，避免Compose状态更新延迟问题
+    var keywordInput by remember { mutableStateOf("") }
+
     // 搜索函数
     fun performSearch() {
-        val trimmedInput = searchFilters.keyword.trim()
+        val trimmedInput = keywordInput.trim()
+        Log.d("SearchScreen", "执行搜索，输入内容: '$trimmedInput'")
         if (trimmedInput.isEmpty()) {
             platformService.showToast("搜索词不能为空")
             return
         }
-        // 清空之前的筛选条件，只保留关键词
+        // 更新ViewModel的筛选条件，只保留关键词
         viewModel.updateSearchFilters(
             SearchFilters(keyword = trimmedInput)
         )
+        Log.d("SearchScreen", "已更新ViewModel筛选条件，开始调用searchMusic()")
         viewModel.searchMusic()
         keyboardController?.hide()
         onSearch()
@@ -119,8 +125,8 @@ fun SearchScreen(
 
                     // 右侧：搜索区域
                     SearchSection(
-                        keyword = searchFilters.keyword,
-                        onKeywordChange = { viewModel.updateSearchFilters(searchFilters.copy(keyword = it)) },
+                        keyword = keywordInput,
+                        onKeywordChange = { keywordInput = it },
                         onSearch = { performSearch() },
                         modifier = Modifier.weight(1f)
                     )
@@ -140,8 +146,8 @@ fun SearchScreen(
                     Spacer(modifier = Modifier.height(48.dp))
 
                     SearchSection(
-                        keyword = searchFilters.keyword,
-                        onKeywordChange = { viewModel.updateSearchFilters(searchFilters.copy(keyword = it)) },
+                        keyword = keywordInput,
+                        onKeywordChange = { keywordInput = it },
                         onSearch = { performSearch() },
                         modifier = Modifier.fillMaxWidth()
                     )

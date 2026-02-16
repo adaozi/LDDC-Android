@@ -99,6 +99,9 @@ dependencies {
     // DataStore for preferences
     implementation(libs.androidx.datastore.preferences)
 
+    // Pinyin4j for Chinese to Pinyin conversion
+    implementation(libs.pinyin4j)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
