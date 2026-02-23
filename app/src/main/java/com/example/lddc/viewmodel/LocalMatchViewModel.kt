@@ -46,6 +46,7 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
 
     companion object {
         private const val TAG = "LocalMatchViewModel"
+        private const val PAGE_SIZE = 20
     }
 
     // UseCase层依赖（通过DI获取）
@@ -119,6 +120,15 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    private val _hasMoreData = MutableStateFlow(true)
+    val hasMoreData: StateFlow<Boolean> = _hasMoreData.asStateFlow()
+
+    private val _currentPage = MutableStateFlow(1)
+    val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
 
     private val _isLoadingLyrics = MutableStateFlow(false)
     val isLoadingLyrics: StateFlow<Boolean> = _isLoadingLyrics.asStateFlow()
@@ -504,6 +514,8 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
 
         _searchKeyword.value = keyword
         _isSearching.value = true
+        _currentPage.value = 1
+        _hasMoreData.value = true
         searchJob = viewModelScope.launch {
             try {
                 // 直接使用 LyricsApiServiceImpl 进行多平台搜索，保留原始 SongInfo
@@ -547,11 +559,79 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
                 // 根据本地音乐信息筛选和排序
                 _searchResults.value = filterAndSortMusicUseCase.filterAndSortByLocalMusic(musicResults, localMusic)
 
+                // 判断是否还有更多数据
+                _hasMoreData.value = musicResults.size >= PAGE_SIZE
+
             } catch (e: Exception) {
                 Log.e(TAG, "搜索失败", e)
                 _searchResults.value = emptyList()
+                _hasMoreData.value = false
             } finally {
                 _isSearching.value = false
+            }
+        }
+    }
+
+    /**
+     * 加载更多搜索结果（分页）
+     */
+    fun loadMore() {
+        if (_isLoadingMore.value || !_hasMoreData.value) return
+
+        viewModelScope.launch {
+            _isLoadingMore.value = true
+            val nextPage = _currentPage.value + 1
+
+            try {
+                val keyword = _searchKeyword.value
+                if (keyword.isBlank()) return@launch
+
+                // 直接使用 LyricsApiServiceImpl 进行多平台搜索
+                val results = lyricsApiService.multiSearch(
+                    keyword = keyword,
+                    searchType = com.example.lddc.model.SearchType.SONG,
+                    sources = listOf(Source.QM, Source.NE, Source.KG),
+                    page = nextPage
+                )
+
+                val songInfoMapBuilder = mutableMapOf<String, SongInfo>()
+
+                val newMusicResults = results.map { item ->
+                    songInfoMapBuilder[item.id] = item
+
+                    val durationInSeconds = item.duration / 1000
+
+                    Music(
+                        id = item.id,
+                        title = item.title,
+                        artist = item.artist.name,
+                        duration = durationInSeconds.toString(),
+                        platform = when (item.source) {
+                            Source.QM -> "QQ音乐"
+                            Source.NE -> "网易云音乐"
+                            Source.KG -> "酷狗音乐"
+                        },
+                        album = item.album,
+                        imageUrl = item.imageUrl,
+                        description = "",
+                        lyrics = "",
+                        lyricsType = "未知"
+                    )
+                }
+
+                if (newMusicResults.isNotEmpty()) {
+                    songInfoMap = songInfoMap + songInfoMapBuilder
+                    _searchResults.value = _searchResults.value + newMusicResults
+                    _currentPage.value = nextPage
+                    _hasMoreData.value = newMusicResults.size >= PAGE_SIZE
+                } else {
+                    _hasMoreData.value = false
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "加载更多失败", e)
+                _hasMoreData.value = false
+            } finally {
+                _isLoadingMore.value = false
             }
         }
     }

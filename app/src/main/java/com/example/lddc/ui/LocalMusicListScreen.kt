@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,6 +68,7 @@ import com.example.lddc.model.LyricsWriteMode
 import com.example.lddc.service.PermissionManager
 import com.example.lddc.ui.components.EmptyState
 import com.example.lddc.ui.components.LocalMusicCard
+import com.example.lddc.ui.theme.UiConstants
 import com.example.lddc.viewmodel.LocalMatchViewModel
 import com.example.lddc.viewmodel.MatchState
 import com.example.lddc.viewmodel.ScanState
@@ -105,6 +108,10 @@ fun LocalMusicListScreen(
     val showSaveModeDialog by viewModel.showSaveModeDialog.collectAsState()
     val defaultSaveMode by viewModel.defaultSaveMode.collectAsState()
 
+    // 横竖屏检测
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
     // 权限状态
     var hasPermission by remember {
         mutableStateOf(PermissionManager.hasAudioPermission(context))
@@ -142,7 +149,7 @@ fun LocalMusicListScreen(
                                     File(selectedFolder).name
                                 } else "文件夹"
                             },
-                            fontSize = 20.sp,
+                            fontSize = UiConstants.FontSize.XLarge,
                             fontWeight = FontWeight.Bold
                         )
                         // 显示数量信息
@@ -154,7 +161,7 @@ fun LocalMusicListScreen(
                         if (subtitle.isNotEmpty()) {
                             Text(
                                 text = subtitle,
-                                fontSize = 12.sp,
+                                fontSize = UiConstants.FontSize.Small,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -277,20 +284,37 @@ fun LocalMusicListScreen(
                                     matchResults = matchResults,
                                     matchProgress = matchProgress,
                                     onMusicClick = onMusicSelected,
-                                    onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) }
+                                    onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) },
+                                    isLandscape = isLandscape
                                 )
                             }
                         }
                         ViewMode.FOLDER -> {
-                            // 文件夹视图
-                            if (selectedFolder == null) {
-                                // 显示文件夹列表
+                            // 文件夹视图 - 横竖屏适配
+                            if (isLandscape && selectedFolder == null) {
+                                // 横屏：左右分栏布局
+                                FolderMusicSplitView(
+                                    folderList = folderList,
+                                    musicByFolder = viewModel.musicByFolder.collectAsState().value,
+                                    selectedFolder = selectedFolder,
+                                    displayedMusicList = displayedMusicList,
+                                    matchResults = matchResults,
+                                    matchProgress = matchProgress,
+                                    onFolderClick = { folder ->
+                                        viewModel.selectFolder(folder)
+                                    },
+                                    onMusicClick = onMusicSelected,
+                                    onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) }
+                                )
+                            } else if (selectedFolder == null) {
+                                // 竖屏：显示文件夹列表
                                 FolderListContent(
                                     folderList = folderList,
                                     musicByFolder = viewModel.musicByFolder.collectAsState().value,
                                     onFolderClick = { folder ->
                                         viewModel.selectFolder(folder)
-                                    }
+                                    },
+                                    isLandscape = isLandscape
                                 )
                             } else {
                                 // 显示选中文件夹的音乐
@@ -302,7 +326,8 @@ fun LocalMusicListScreen(
                                         matchResults = matchResults,
                                         matchProgress = matchProgress,
                                         onMusicClick = onMusicSelected,
-                                        onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) }
+                                        onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) },
+                                        isLandscape = isLandscape
                                     )
                                 }
                             }
@@ -441,8 +466,8 @@ private fun PermissionDeniedState(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp)
+            verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Large),
+            modifier = Modifier.padding(UiConstants.Padding.XXLarge)
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -453,20 +478,154 @@ private fun PermissionDeniedState(
 
             Text(
                 text = "需要存储权限",
-                fontSize = 20.sp,
+                fontSize = UiConstants.FontSize.XLarge,
                 fontWeight = FontWeight.Medium
             )
 
             Text(
                 text = "请授予读取存储权限以扫描本地音乐文件",
-                fontSize = 14.sp,
+                fontSize = UiConstants.FontSize.Normal,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
 
             Button(onClick = onRequestPermission) {
                 Text("授予权限")
+            }
+        }
+    }
+}
+
+/**
+ * 横屏分栏布局 - 左侧文件夹列表，右侧音乐列表
+ */
+@Composable
+private fun FolderMusicSplitView(
+    folderList: List<String>,
+    musicByFolder: Map<String, List<LocalMusicInfo>>,
+    selectedFolder: String?,
+    displayedMusicList: List<LocalMusicInfo>,
+    matchResults: List<LocalMusicMatchResult>,
+    matchProgress: com.example.lddc.model.MatchProgress,
+    onFolderClick: (String) -> Unit,
+    onMusicClick: (LocalMusicInfo) -> Unit,
+    onStartMatch: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        // 左侧文件夹列表
+        LazyColumn(
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(UiConstants.Padding.Large),
+            verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Small)
+        ) {
+            items(folderList) { folderPath ->
+                val musicCount = musicByFolder[folderPath]?.size ?: 0
+                val folderName = File(folderPath).name
+                val isSelected = folderPath == selectedFolder
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onFolderClick(folderPath) },
+                    shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        }
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = if (isSelected) UiConstants.Elevation.Medium else UiConstants.Elevation.Low
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(UiConstants.Padding.Medium),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(UiConstants.CornerRadius.Small)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Folder,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = folderName,
+                                fontSize = UiConstants.FontSize.Normal,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Text(
+                                text = "$musicCount 首",
+                                fontSize = UiConstants.FontSize.Small,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // 右侧音乐列表
+        Box(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+        ) {
+            if (selectedFolder == null) {
+                // 未选择文件夹时显示提示
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = null,
+                            modifier = Modifier.size(UiConstants.Size.IconLarge),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Text(
+                            text = "请选择一个文件夹",
+                            fontSize = UiConstants.FontSize.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else if (displayedMusicList.isEmpty()) {
+                EmptyState(message = "该文件夹没有音乐文件")
+            } else {
+                MusicListContent(
+                    musicList = displayedMusicList,
+                    matchResults = matchResults,
+                    matchProgress = matchProgress,
+                    onMusicClick = onMusicClick,
+                    onStartMatch = onStartMatch,
+                    isLandscape = true
+                )
             }
         }
     }
@@ -479,12 +638,15 @@ private fun PermissionDeniedState(
 private fun FolderListContent(
     folderList: List<String>,
     musicByFolder: Map<String, List<LocalMusicInfo>>,
-    onFolderClick: (String) -> Unit
+    onFolderClick: (String) -> Unit,
+    isLandscape: Boolean = false
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            if (isLandscape) UiConstants.Padding.XLarge else UiConstants.Padding.Large
+        ),
+        verticalArrangement = Arrangement.spacedBy(if (isLandscape) UiConstants.Spacing.Medium else UiConstants.Spacing.Small)
     ) {
         items(folderList) { folderPath ->
             val musicCount = musicByFolder[folderPath]?.size ?: 0
@@ -494,18 +656,18 @@ private fun FolderListContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onFolderClick(folderPath) },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Low)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(UiConstants.Padding.Large),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Large)
                 ) {
                     // 文件夹图标
                     Box(
@@ -513,7 +675,7 @@ private fun FolderListContent(
                             .size(48.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(UiConstants.CornerRadius.Small)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -524,31 +686,31 @@ private fun FolderListContent(
                             modifier = Modifier.size(28.dp)
                         )
                     }
-                    
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = folderName,
-                            fontSize = 16.sp,
+                            fontSize = UiConstants.FontSize.Medium,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        
+
                         Text(
                             text = "$musicCount 首音乐",
-                            fontSize = 14.sp,
+                            fontSize = UiConstants.FontSize.Normal,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        
+
                         Text(
                             text = folderPath,
-                            fontSize = 12.sp,
+                            fontSize = UiConstants.FontSize.Small,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    
+
                     // 箭头图标
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -575,7 +737,7 @@ private fun IdleState(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Large)
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -586,17 +748,17 @@ private fun IdleState(
 
             Text(
                 text = "扫描本地音乐",
-                fontSize = 20.sp,
+                fontSize = UiConstants.FontSize.XLarge,
                 fontWeight = FontWeight.Medium
             )
 
             Text(
                 text = "点击开始扫描设备上的音乐文件",
-                fontSize = 14.sp,
+                fontSize = UiConstants.FontSize.Normal,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
 
             Button(onClick = onStartScan) {
                 Text("开始扫描")
@@ -616,14 +778,14 @@ private fun ScanningState(progress: com.example.lddc.model.ScanProgress) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp)
+            verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Large),
+            modifier = Modifier.padding(UiConstants.Padding.XXLarge)
         ) {
             CircularProgressIndicator()
 
             Text(
                 text = "正在扫描本地音乐...",
-                fontSize = 18.sp,
+                fontSize = UiConstants.FontSize.Large,
                 fontWeight = FontWeight.Medium
             )
 
@@ -636,7 +798,7 @@ private fun ScanningState(progress: com.example.lddc.model.ScanProgress) {
 
                 Text(
                     text = "${progress.current} / ${progress.total} (${progress.percentage()}%)",
-                    fontSize = 14.sp,
+                    fontSize = UiConstants.FontSize.Normal,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
@@ -645,7 +807,7 @@ private fun ScanningState(progress: com.example.lddc.model.ScanProgress) {
 
             Text(
                 text = "已发现 ${progress.foundMusic} 首音乐",
-                fontSize = 14.sp,
+                fontSize = UiConstants.FontSize.Normal,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -656,7 +818,7 @@ private fun ScanningState(progress: com.example.lddc.model.ScanProgress) {
                 } else {
                     "单线程扫描"
                 },
-                fontSize = 12.sp,
+                fontSize = UiConstants.FontSize.Small,
                 color = if (progress.threadCount > 1) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -667,7 +829,7 @@ private fun ScanningState(progress: com.example.lddc.model.ScanProgress) {
             if (progress.currentPath.isNotEmpty()) {
                 Text(
                     text = progress.currentPath.takeLast(50),
-                    fontSize = 12.sp,
+                    fontSize = UiConstants.FontSize.Small,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     maxLines = 1
                 )
@@ -685,18 +847,20 @@ private fun MusicListContent(
     matchResults: List<LocalMusicMatchResult>,
     matchProgress: com.example.lddc.model.MatchProgress,
     onMusicClick: (LocalMusicInfo) -> Unit,
-    onStartMatch: () -> Unit
+    onStartMatch: () -> Unit,
+    isLandscape: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         // 匹配进度显示（仅在匹配中时显示）
         if (matchProgress.total > 0) {
             if (matchProgress.current < matchProgress.total) {
                 // 显示匹配进度
-                MatchingProgressBar(progress = matchProgress)
+                MatchingProgressBar(progress = matchProgress, isLandscape = isLandscape)
             } else {
                 // 显示匹配完成统计（简洁版）
                 MatchStatusBar(
-                    text = "匹配完成: ${matchProgress.successCount} 首成功"
+                    text = "匹配完成: ${matchProgress.successCount} 首成功",
+                    isLandscape = isLandscape
                 )
             }
         }
@@ -706,8 +870,10 @@ private fun MusicListContent(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                if (isLandscape) UiConstants.Padding.XLarge else UiConstants.Padding.Large
+            ),
+            verticalArrangement = Arrangement.spacedBy(if (isLandscape) UiConstants.Spacing.Medium else UiConstants.Spacing.Small)
         ) {
             items(musicList) { music ->
                 val matchResult = matchResults.find { it.localMusic.id == music.id }
@@ -726,18 +892,22 @@ private fun MusicListContent(
  */
 @Composable
 private fun MatchStatusBar(
-    text: String
+    text: String,
+    isLandscape: Boolean = false
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(
+                horizontal = if (isLandscape) UiConstants.Padding.XLarge else UiConstants.Padding.Large,
+                vertical = UiConstants.Spacing.Small
+            ),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = text,
-            fontSize = 14.sp,
+            fontSize = UiConstants.FontSize.Normal,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -748,12 +918,16 @@ private fun MatchStatusBar(
  */
 @Composable
 private fun MatchingProgressBar(
-    progress: com.example.lddc.model.MatchProgress
+    progress: com.example.lddc.model.MatchProgress,
+    isLandscape: Boolean = false
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(
+                horizontal = if (isLandscape) UiConstants.Padding.XLarge else UiConstants.Padding.Large,
+                vertical = UiConstants.Padding.Medium
+            )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -761,23 +935,23 @@ private fun MatchingProgressBar(
         ) {
             Text(
                 text = "正在匹配: ${progress.currentMusic}",
-                fontSize = 14.sp,
+                fontSize = UiConstants.FontSize.Normal,
                 maxLines = 1
             )
             Text(
                 text = "${progress.current}/${progress.total}",
-                fontSize = 14.sp
+                fontSize = UiConstants.FontSize.Normal
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(UiConstants.Spacing.XS))
 
         LinearProgressIndicator(
             progress = { if (progress.total > 0) progress.current.toFloat() / progress.total else 0f },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(UiConstants.Spacing.XS))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -785,12 +959,12 @@ private fun MatchingProgressBar(
         ) {
             Text(
                 text = "成功: ${progress.successCount}",
-                fontSize = 12.sp,
+                fontSize = UiConstants.FontSize.Small,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = "失败: ${progress.failedCount}",
-                fontSize = 12.sp,
+                fontSize = UiConstants.FontSize.Small,
                 color = MaterialTheme.colorScheme.error
             )
         }

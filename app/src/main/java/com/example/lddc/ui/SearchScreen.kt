@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lddc.model.SearchFilters
 import com.example.lddc.service.PlatformService
+import com.example.lddc.ui.theme.UiConstants
 import com.example.lddc.viewmodel.MusicViewModel
 
 /**
@@ -175,11 +176,11 @@ fun BrandSection(modifier: Modifier = Modifier) {
     ) {
         // Logo 卡片
         Card(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(UiConstants.CornerRadius.Logo),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary
             ),
-            modifier = Modifier.size(120.dp)
+            modifier = Modifier.size(UiConstants.Size.Logo)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -187,14 +188,14 @@ fun BrandSection(modifier: Modifier = Modifier) {
             ) {
                 Text(
                     text = "L",
-                    fontSize = 64.sp,
+                    fontSize = UiConstants.FontSize.XXLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(UiConstants.Spacing.XXLarge))
 
         // 应用名称
         Text(
@@ -204,12 +205,12 @@ fun BrandSection(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(UiConstants.Spacing.Small))
 
         // 副标题
         Text(
             text = "歌词下载工具",
-            fontSize = 16.sp,
+            fontSize = UiConstants.FontSize.Medium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
     }
@@ -226,26 +227,26 @@ fun SearchSection(
 
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(UiConstants.CornerRadius.Large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Medium)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(UiConstants.Padding.XXLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "搜索歌曲",
-                fontSize = 20.sp,
+                fontSize = UiConstants.FontSize.XLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
 
             // 搜索输入框
             OutlinedTextField(
@@ -254,7 +255,7 @@ fun SearchSection(
                 placeholder = { Text("请输入歌曲名或歌手") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
@@ -275,7 +276,7 @@ fun SearchSection(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
 
             // 搜索按钮
             Button(
@@ -283,14 +284,14 @@ fun SearchSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text(
                     text = "开始搜索",
-                    fontSize = 16.sp,
+                    fontSize = UiConstants.FontSize.Medium,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -309,37 +310,37 @@ fun LocalMusicEntry(
     Card(
         modifier = modifier
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Low)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(UiConstants.Padding.Large),
+            horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.FolderOpen,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(UiConstants.Size.IconMedium)
             )
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "本地音乐",
-                    fontSize = 16.sp,
+                    fontSize = UiConstants.FontSize.Medium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
 
                 Text(
                     text = "为本地音乐文件匹配歌词",
-                    fontSize = 12.sp,
+                    fontSize = UiConstants.FontSize.Small,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
             }

@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -44,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +66,7 @@ import com.example.lddc.service.LyricsService
 import com.example.lddc.service.MusicFilterService
 import com.example.lddc.service.PlatformService
 import com.example.lddc.ui.components.InfoChip
+import com.example.lddc.ui.theme.UiConstants
 import com.example.lddc.viewmodel.LocalMatchViewModel
 
 /**
@@ -94,6 +98,10 @@ fun LocalMusicSearchDetailScreen(
             }
         }
     }
+
+    // 横竖屏检测
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // 转换歌词用于显示
     val displayLyrics = selectedSearchResult?.let { music ->
@@ -145,7 +153,7 @@ fun LocalMusicSearchDetailScreen(
                 title = {
                     Text(
                         text = "歌曲详情",
-                        fontSize = 20.sp,
+                        fontSize = UiConstants.FontSize.XLarge,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -173,31 +181,26 @@ fun LocalMusicSearchDetailScreen(
             selectedSearchResult?.let { music ->
                 val formattedDuration = filterService.formatDuration(music.duration)
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
-                ) {
-                    // 歌曲信息卡片
-                    MusicInfoCard(
+                if (isLandscape) {
+                    // 横屏：左右分栏布局
+                    LocalMusicSearchDetailLandscape(
                         music = music,
-                        formattedDuration = formattedDuration
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 歌词卡片（包含使用此歌词按钮）
-                    LyricsCard(
-                        lyrics = displayLyrics,
-                        originalLyrics = music.lyrics,
-                        lyricsType = music.lyricsType,
-                        isLoading = isLoadingLyrics,
+                        formattedDuration = formattedDuration,
+                        displayLyrics = displayLyrics,
+                        isLoadingLyrics = isLoadingLyrics,
                         platformService = platformService,
-                        onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) }
+                        onUseLyrics = onUseLyrics
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    // 竖屏：单列布局
+                    LocalMusicSearchDetailPortrait(
+                        music = music,
+                        formattedDuration = formattedDuration,
+                        displayLyrics = displayLyrics,
+                        isLoadingLyrics = isLoadingLyrics,
+                        platformService = platformService,
+                        onUseLyrics = onUseLyrics
+                    )
                 }
             } ?: run {
                 // 没有选中歌曲
@@ -207,11 +210,105 @@ fun LocalMusicSearchDetailScreen(
                 ) {
                     Text(
                         text = "未找到歌曲信息",
-                        fontSize = 18.sp,
+                        fontSize = UiConstants.FontSize.Large,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * 竖屏布局
+ */
+@Composable
+private fun LocalMusicSearchDetailPortrait(
+    music: Music,
+    formattedDuration: String,
+    displayLyrics: String,
+    isLoadingLyrics: Boolean,
+    platformService: PlatformService,
+    onUseLyrics: (String, LyricsWriteMode) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(UiConstants.Padding.Large)
+    ) {
+        // 歌曲信息卡片
+        MusicInfoCard(
+            music = music,
+            formattedDuration = formattedDuration,
+            isLandscape = false
+        )
+
+        Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
+
+        // 歌词卡片（包含使用此歌词按钮）
+        LyricsCard(
+            lyrics = displayLyrics,
+            originalLyrics = music.lyrics,
+            lyricsType = music.lyricsType,
+            isLoading = isLoadingLyrics,
+            platformService = platformService,
+            onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) },
+            isLandscape = false
+        )
+
+        Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
+    }
+}
+
+/**
+ * 横屏布局
+ */
+@Composable
+private fun LocalMusicSearchDetailLandscape(
+    music: Music,
+    formattedDuration: String,
+    displayLyrics: String,
+    isLoadingLyrics: Boolean,
+    platformService: PlatformService,
+    onUseLyrics: (String, LyricsWriteMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(UiConstants.Padding.XLarge)
+    ) {
+        // 左侧：歌曲信息
+        Column(
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
+        ) {
+            MusicInfoCard(
+                music = music,
+                formattedDuration = formattedDuration,
+                isLandscape = true
+            )
+        }
+
+        Spacer(modifier = Modifier.width(UiConstants.Spacing.XXLarge))
+
+        // 右侧：歌词
+        Box(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+        ) {
+            LyricsCard(
+                lyrics = displayLyrics,
+                originalLyrics = music.lyrics,
+                lyricsType = music.lyricsType,
+                isLoading = isLoadingLyrics,
+                platformService = platformService,
+                onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) },
+                isLandscape = true
+            )
         }
     }
 }
@@ -223,27 +320,28 @@ fun LocalMusicSearchDetailScreen(
 @Composable
 private fun MusicInfoCard(
     music: Music,
-    formattedDuration: String
+    formattedDuration: String,
+    isLandscape: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(UiConstants.CornerRadius.XLarge),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Medium)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(if (isLandscape) UiConstants.Padding.Large else UiConstants.Padding.XLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 专辑封面 - 接近卡片宽度
             Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                modifier = Modifier.fillMaxWidth(0.7f)
+                shape = RoundedCornerShape(UiConstants.CornerRadius.Large),
+                elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.High),
+                modifier = Modifier.fillMaxWidth(if (isLandscape) 0.5f else 0.7f)
             ) {
                 if (music.imageUrl.isNotEmpty() && music.imageUrl != "default") {
                     AsyncImage(
@@ -261,49 +359,49 @@ private fun MusicInfoCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1f)
-                            .padding(48.dp),
+                            .padding(if (isLandscape) 32.dp else 48.dp),
                         contentScale = ContentScale.Fit
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(if (isLandscape) UiConstants.Spacing.Large else UiConstants.Spacing.XLarge))
 
             // 歌曲标题
             Text(
                 text = music.title,
-                fontSize = 22.sp,
+                fontSize = if (isLandscape) UiConstants.FontSize.Large else UiConstants.FontSize.XLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.XS))
 
             // 歌手
             Text(
                 text = music.artist,
-                fontSize = 16.sp,
+                fontSize = if (isLandscape) UiConstants.FontSize.Normal else UiConstants.FontSize.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.XS))
 
             // 专辑名
             Text(
                 text = music.album,
-                fontSize = 14.sp,
+                fontSize = UiConstants.FontSize.Normal,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.Medium))
 
             // 信息标签行：时长、平台、歌词类型
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Small)
             ) {
                 InfoChip(text = formattedDuration)
                 InfoChip(text = getPlatformDisplayName(music.platform))
@@ -324,18 +422,19 @@ private fun LyricsCard(
     lyricsType: String,
     isLoading: Boolean,
     platformService: PlatformService,
-    onUseLyrics: (LyricsWriteMode) -> Unit
+    onUseLyrics: (LyricsWriteMode) -> Unit,
+    isLandscape: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(UiConstants.CornerRadius.XLarge),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Medium)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(if (isLandscape) UiConstants.Padding.Large else UiConstants.Padding.Medium)
         ) {
             // 标题栏
             Row(
@@ -345,7 +444,7 @@ private fun LyricsCard(
             ) {
                 Text(
                     text = "歌词",
-                    fontSize = 18.sp,
+                    fontSize = if (isLandscape) UiConstants.FontSize.Large else UiConstants.FontSize.Medium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -362,7 +461,7 @@ private fun LyricsCard(
                                 android.util.Log.d("LyricsCard", "点击使用此歌词按钮")
                                 showMenu = true
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
@@ -403,20 +502,20 @@ private fun LyricsCard(
                     // 歌词为空时显示提示
                     Text(
                         text = "暂无歌词",
-                        fontSize = 14.sp,
+                        fontSize = UiConstants.FontSize.Normal,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(UiConstants.Spacing.Medium))
 
             // 歌词内容
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(if (isLandscape) UiConstants.LyricsHeight.Max else UiConstants.LyricsHeight.Default),
+                shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 )
@@ -434,7 +533,7 @@ private fun LyricsCard(
                         originalLyrics.isBlank() -> {
                             Text(
                                 text = "暂无歌词",
-                                fontSize = 16.sp,
+                                fontSize = UiConstants.FontSize.Medium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -444,7 +543,7 @@ private fun LyricsCard(
                                 onValueChange = { },
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(16.dp),
+                                    .padding(UiConstants.Padding.Large),
                                 textStyle = MaterialTheme.typography.bodyMedium.copy(
                                     lineHeight = 24.sp,
                                     color = MaterialTheme.colorScheme.onSurface
