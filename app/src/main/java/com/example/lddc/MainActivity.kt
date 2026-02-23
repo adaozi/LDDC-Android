@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,6 +20,7 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.example.lddc.navigation.Screen
+import com.example.lddc.service.PlatformService
 import com.example.lddc.ui.DetailScreen
 import com.example.lddc.ui.LocalMusicDetailScreen
 import com.example.lddc.ui.LocalMusicListScreen
@@ -181,15 +184,45 @@ fun MusicApp(
         }
 
         composable(Screen.LocalMusicSearchDetailScreen.route) {
+            val context = LocalContext.current
+            val platformService = remember { PlatformService(context) }
             LocalMusicSearchDetailScreen(
                 viewModel = localMatchViewModel,
                 onBack = { navController.popBackStack() },
-                onUseLyrics = { lyrics ->
-                    // 写入歌词到本地音乐（使用转换后的歌词）
-                    localMatchViewModel.writeLyricsToLocalMusic(lyrics) { success ->
+                onUseLyrics = { lyrics, mode ->
+                    android.util.Log.d("MainActivity", "点击使用此歌词，歌词长度: ${lyrics.length}, 模式: $mode")
+                    // 写入歌词到本地音乐（使用转换后的歌词和选择的保存模式）
+                    localMatchViewModel.writeLyricsToLocalMusic(lyrics, mode) { success, errorMessage ->
+                        android.util.Log.d("MainActivity", "歌词写入结果: $success, 错误: $errorMessage")
                         if (success) {
+                            // 显示成功提示
+                            val modeText = when (mode) {
+                                com.example.lddc.model.LyricsWriteMode.EMBEDDED -> "已写入音频文件"
+                                com.example.lddc.model.LyricsWriteMode.SEPARATE_FILE -> "已保存为歌词文件"
+                                com.example.lddc.model.LyricsWriteMode.BOTH -> "已同时保存到两者"
+                                else -> "歌词已保存"
+                            }
+                            platformService.showToast(modeText)
                             // 返回本地歌曲详情页
                             navController.popBackStack(Screen.LocalMusicDetailScreen.route, false)
+                        } else {
+                            // 显示失败提示
+                            if (errorMessage?.contains("权限") == true ||
+                                errorMessage?.contains("Permission") == true ||
+                                errorMessage?.contains("NoWritePermissionsException") == true) {
+                                platformService.showToast("需要「管理所有文件」权限才能保存歌词")
+                                // 引导用户去系统设置开启权限（Android 11+）
+                                val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                                    android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                                } else {
+                                    android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = android.net.Uri.fromParts("package", context.packageName, null)
+                                    }
+                                }
+                                context.startActivity(intent)
+                            } else {
+                                platformService.showToast("歌词保存失败: ${errorMessage ?: "未知错误"}")
+                            }
                         }
                     }
                 }

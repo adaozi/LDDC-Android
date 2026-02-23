@@ -23,6 +23,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,8 +37,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -50,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.lddc.model.Lyrics
 import com.example.lddc.model.LyricsFormat
+import com.example.lddc.model.LyricsWriteMode
 import com.example.lddc.model.Music
 import com.example.lddc.model.Source
 import com.example.lddc.service.LyricsConvertOptions
@@ -71,7 +76,7 @@ import com.example.lddc.viewmodel.LocalMatchViewModel
 fun LocalMusicSearchDetailScreen(
     viewModel: LocalMatchViewModel = viewModel(),
     onBack: () -> Unit,
-    onUseLyrics: (String) -> Unit
+    onUseLyrics: (String, LyricsWriteMode) -> Unit
 ) {
     val selectedSearchResult by viewModel.selectedSearchResult.collectAsState()
     val isLoadingLyrics by viewModel.isLoadingLyrics.collectAsState()
@@ -189,7 +194,7 @@ fun LocalMusicSearchDetailScreen(
                         lyricsType = music.lyricsType,
                         isLoading = isLoadingLyrics,
                         platformService = platformService,
-                        onUseLyrics = { onUseLyrics(displayLyrics) }
+                        onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -319,7 +324,7 @@ private fun LyricsCard(
     lyricsType: String,
     isLoading: Boolean,
     platformService: PlatformService,
-    onUseLyrics: () -> Unit
+    onUseLyrics: (LyricsWriteMode) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -345,16 +350,62 @@ private fun LyricsCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
+                // 调试日志
+                android.util.Log.d("LyricsCard", "isLoading: $isLoading, originalLyrics.isNotBlank: ${originalLyrics.isNotBlank()}, originalLyrics.length: ${originalLyrics.length}")
+
                 if (!isLoading && originalLyrics.isNotBlank()) {
-                    Button(
-                        onClick = onUseLyrics,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text("使用此歌词")
+                    // 使用下拉菜单让用户选择保存方式
+                    var showMenu by remember { mutableStateOf(false) }
+                    Box {
+                        Button(
+                            onClick = {
+                                android.util.Log.d("LyricsCard", "点击使用此歌词按钮")
+                                showMenu = true
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text("使用此歌词")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("写入到音频文件 (ID3标签)") },
+                                onClick = {
+                                    android.util.Log.d("LyricsCard", "选择：写入到音频文件")
+                                    onUseLyrics(LyricsWriteMode.EMBEDDED)
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("写入到歌词文件 (.lrc)") },
+                                onClick = {
+                                    android.util.Log.d("LyricsCard", "选择：写入到歌词文件")
+                                    onUseLyrics(LyricsWriteMode.SEPARATE_FILE)
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("同时写入两者") },
+                                onClick = {
+                                    android.util.Log.d("LyricsCard", "选择：同时写入两者")
+                                    onUseLyrics(LyricsWriteMode.BOTH)
+                                    showMenu = false
+                                }
+                            )
+                        }
                     }
+                } else if (!isLoading) {
+                    // 歌词为空时显示提示
+                    Text(
+                        text = "暂无歌词",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 

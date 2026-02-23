@@ -147,7 +147,7 @@ fun ResultsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { showFilterDialog = true }) {
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = "筛选",
@@ -350,7 +350,7 @@ fun ResultsScreen(
                 onFiltersChanged = { newFilters ->
                     viewModel.updateSearchFilters(newFilters)
                 },
-                onDismiss = { }
+                onDismiss = { showFilterDialog = false }
             )
         }
     }

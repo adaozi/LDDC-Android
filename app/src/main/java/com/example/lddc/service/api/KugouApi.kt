@@ -78,10 +78,10 @@ class KugouApi(private val httpClient: HttpClient) {
         val sortedParams = params.toSortedMap()
         val paramStr = sortedParams.entries.joinToString("") { (key, value) ->
             val valueStr = when (value) {
-                is Map<*, *> -> kotlinx.serialization.json.Json.encodeToString(
-                    kotlinx.serialization.json.JsonObject.serializer(),
-                    value.entries.fold(kotlinx.serialization.json.JsonObject(emptyMap())) { acc, entry ->
-                        kotlinx.serialization.json.JsonObject(acc + (entry.key.toString() to kotlinx.serialization.json.JsonPrimitive(entry.value.toString())))
+                is Map<*, *> -> Json.encodeToString(
+                    JsonObject.serializer(),
+                    value.entries.fold(JsonObject(emptyMap())) { acc, entry ->
+                        JsonObject(acc + (entry.key.toString() to JsonPrimitive(entry.value.toString())))
                     }
                 )
                 else -> value.toString()

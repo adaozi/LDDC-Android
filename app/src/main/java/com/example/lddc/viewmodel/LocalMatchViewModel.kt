@@ -701,22 +701,26 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     /**
      * 将指定的歌词写入当前选中的本地音乐
      */
-    fun writeLyricsToLocalMusic(lyrics: String, onComplete: (Boolean) -> Unit = {}) {
+    fun writeLyricsToLocalMusic(
+        lyrics: String,
+        mode: LyricsWriteMode = LyricsWriteMode.EMBEDDED,
+        onComplete: (Boolean, String?) -> Unit = { _, _ -> }
+    ) {
         viewModelScope.launch {
             try {
                 val localMusic = _selectedLocalMusic.value
 
                 if (localMusic == null || lyrics.isBlank()) {
                     Log.e(TAG, "无法写入歌词：本地音乐为空或歌词为空")
-                    onComplete(false)
+                    onComplete(false, "本地音乐为空或歌词为空")
                     return@launch
                 }
 
-                // 写入歌词到本地音乐文件
+                // 写入歌词到本地音乐文件（使用用户选择的保存模式）
                 val result = matchLocalMusicUseCase.writeLyrics(
                     localMusic.filePath,
                     lyrics,
-                    LyricsWriteMode.EMBEDDED
+                    mode
                 )
 
                 if (result.success) {
@@ -731,15 +735,15 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
                     }
                     _matchResults.value = updatedResults
 
-                    Log.d(TAG, "歌词写入成功: ${localMusic.filePath}")
-                    onComplete(true)
+                    Log.d(TAG, "歌词写入成功: ${localMusic.filePath}, 模式: $mode")
+                    onComplete(true, null)
                 } else {
                     Log.e(TAG, "歌词写入失败: ${result.errorMessage}")
-                    onComplete(false)
+                    onComplete(false, result.errorMessage)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "写入歌词失败", e)
-                onComplete(false)
+                onComplete(false, e.message)
             }
         }
     }

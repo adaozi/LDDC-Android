@@ -131,8 +131,10 @@ class JAudioTaggerLyricsWriter {
         } catch (e: Exception) {
             Log.e(TAG, "写入歌词失败: $filePath", e)
             val errorMsg = when {
-                e.message?.contains("Permission denied") == true ->
-                    "没有写入权限。请确保应用有存储权限，或在 Android 11+ 上授予管理所有文件的权限。"
+                e.message?.contains("Permission denied") == true ||
+                e.message?.contains("NoWritePermissionsException") == true ||
+                e.javaClass.name.contains("NoWritePermissionsException") ->
+                    "没有写入权限。Android 11+ 需要授予应用「管理所有文件」权限才能修改外部存储中的音频文件。"
                 e.message?.contains("Read-only") == true ->
                     "文件是只读的。请检查文件权限。"
                 else -> "写入失败: ${e.message}"
@@ -149,25 +151,29 @@ class JAudioTaggerLyricsWriter {
      * Android 11+ 对外部存储文件写入有限制
      */
     private fun canWriteFile(file: File): Boolean {
-        // 检查文件是否可写
-        if (!file.canWrite()) {
-            Log.w(TAG, "文件不可写: ${file.absolutePath}")
-            return false
-        }
-
-        // Android 11+ 检查
+        // Android 11+ 检查 - 尝试直接检查文件是否可写
+        // 即使 file.canWrite() 返回 false，在某些情况下仍然可以写入
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // 检查是否有 MANAGE_EXTERNAL_STORAGE 权限
+            if (Environment.isExternalStorageManager()) {
+                Log.d(TAG, "有 MANAGE_EXTERNAL_STORAGE 权限")
+                return true
+            }
+
             // 检查是否是外部存储中的文件
             val externalStorage = Environment.getExternalStorageDirectory()
             if (file.absolutePath.startsWith(externalStorage.absolutePath)) {
-                // 在 Android 11+ 上，普通应用无法直接修改外部存储中的媒体文件
-                // 除非有 MANAGE_EXTERNAL_STORAGE 权限
-                if (!Environment.isExternalStorageManager()) {
-                    Log.w(TAG, "Android 11+ 需要 MANAGE_EXTERNAL_STORAGE 权限才能修改外部存储文件")
-                    // 仍然返回 true，让写入操作尝试，可能会失败
-                    // 用户需要在系统设置中授予权限
-                }
+                Log.w(TAG, "Android 11+ 无 MANAGE_EXTERNAL_STORAGE 权限，尝试直接写入: ${file.absolutePath}")
+                // 尝试直接写入，某些设备上可能可以工作
+                // 返回 true 让写入操作尝试
+                return true
             }
+        }
+
+        // 检查文件是否可写（Android 10 及以下）
+        if (!file.canWrite()) {
+            Log.w(TAG, "文件不可写: ${file.absolutePath}")
+            return false
         }
 
         return true
