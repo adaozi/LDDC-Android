@@ -71,12 +71,6 @@ data class LocalMusicInfo(
         return fileName.substringBeforeLast(".", fileName)
     }
 
-    /**
-     * 获取文件扩展名
-     */
-    fun fileExtension(): String {
-        return fileName.substringAfterLast(".", "").lowercase()
-    }
 }
 
 /**
@@ -84,12 +78,8 @@ data class LocalMusicInfo(
  */
 enum class LocalMusicMatchStatus {
     IDLE,           // 初始状态
-    SCANNING,       // 扫描中
-    SCANNED,        // 扫描完成
-    MATCHING,       // 匹配中
     MATCHED,        // 已匹配
     FAILED,         // 匹配失败
-    WRITING,        // 写入中
     WRITTEN,        // 已写入
     ERROR           // 发生错误
 }
@@ -114,17 +104,7 @@ data class LocalMusicMatchResult(
     val errorMessage: String? = null,
     val lyricsSaved: Boolean = false
 ) {
-    /**
-     * 是否匹配成功
-     */
-    fun isMatched(): Boolean = status == LocalMusicMatchStatus.MATCHED ||
-            status == LocalMusicMatchStatus.WRITTEN
 
-    /**
-     * 是否可以写入歌词
-     */
-    fun canWriteLyrics(): Boolean = status == LocalMusicMatchStatus.MATCHED &&
-            !lyrics.isNullOrBlank()
 }
 
 /**
@@ -155,21 +135,6 @@ data class LyricsWriteResult(
 )
 
 /**
- * 本地音乐扫描配置
- *
- * @param directories 要扫描的目录列表
- * @param includeSubDirectories 是否包含子目录
- * @param supportedFormats 支持的音频格式
- */
-data class LocalMusicScanConfig(
-    val directories: List<String> = emptyList(),
-    val includeSubDirectories: Boolean = true,
-    val supportedFormats: List<String> = listOf(
-        "mp3", "flac", "m4a", "ogg", "wma", "wav", "ape", "aac"
-    )
-)
-
-/**
  * 扫描进度信息
  *
  * @param current 当前扫描数量
@@ -194,10 +159,6 @@ data class ScanProgress(
         return if (total > 0) (current * 100 / total) else 0
     }
 
-    /**
-     * 是否正在扫描
-     */
-    fun isScanning(): Boolean = current > 0 && (total == 0 || current < total)
 }
 
 /**
@@ -216,15 +177,5 @@ data class MatchProgress(
     val successCount: Int = 0,
     val failedCount: Int = 0
 ) {
-    /**
-     * 获取进度百分比
-     */
-    fun percentage(): Int {
-        return if (total > 0) (current * 100 / total) else 0
-    }
 
-    /**
-     * 是否正在匹配
-     */
-    fun isMatching(): Boolean = current > 0 && current <= total
 }

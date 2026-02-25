@@ -314,7 +314,6 @@ private fun PortraitLocalMusicDetail(
         LocalLyricsCard(
             lyrics = lyrics,
             onLyricsChange = onLyricsChange,
-            matchResult = matchResult,
             platformService = platformService,
             onWriteLyrics = onWriteLyrics,
             modifier = Modifier
@@ -358,7 +357,6 @@ private fun LandscapeLocalMusicDetail(
         LocalLyricsCard(
             lyrics = lyrics,
             onLyricsChange = onLyricsChange,
-            matchResult = matchResult,
             platformService = platformService,
             onWriteLyrics = onWriteLyrics,
             modifier = Modifier
@@ -510,7 +508,6 @@ private fun LocalMusicInfoCard(
 private fun LocalLyricsCard(
     lyrics: String,
     onLyricsChange: (String) -> Unit,
-    matchResult: LocalMusicMatchResult?,
     platformService: PlatformService,
     onWriteLyrics: (LyricsWriteMode) -> Unit,
     modifier: Modifier = Modifier

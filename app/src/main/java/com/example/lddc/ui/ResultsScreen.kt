@@ -98,7 +98,7 @@ fun ResultsScreen(
 
     // 使用 remember 和 derivedStateOf 实现响应式筛选
     val filteredResults: List<Music> by remember(searchResults, searchFilters) {
-        derivedStateOf<List<Music>> {
+        derivedStateOf {
             viewModel.getFilteredResults()
         }
     }
@@ -154,7 +154,7 @@ fun ResultsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showFilterDialog = true }) {
+                    IconButton(onClick = { }) {
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = "筛选",
@@ -357,7 +357,7 @@ fun ResultsScreen(
                 onFiltersChanged = { newFilters ->
                     viewModel.updateSearchFilters(newFilters)
                 },
-                onDismiss = { showFilterDialog = false }
+                onDismiss = { }
             )
         }
     }

@@ -4,7 +4,6 @@ import android.util.Log
 import com.example.lddc.data.repository.LyricsRepository
 import com.example.lddc.model.Lyrics
 import com.example.lddc.model.Music
-import com.example.lddc.model.Source
 
 /**
  * 获取歌词用例
@@ -43,26 +42,4 @@ class GetLyricsUseCase(
         }
     }
 
-    /**
-     * 获取歌词并返回带歌词类型的音乐对象
-     *
-     * @param music 音乐信息
-     * @return 包含歌词的音乐对象
-     */
-    suspend fun getLyricsWithMusic(music: Music): Result<Pair<Music, Lyrics>> {
-        return invoke(music).map { lyrics ->
-            val lyricsType = when (lyrics.source) {
-                Source.QM -> "QRC"
-                Source.KG -> "KRC"
-                Source.NE -> "LRC"
-            }
-            val lyricsContent = lyrics.orig?.takeIf { it.isNotBlank() } ?: lyrics.content
-
-            val updatedMusic = music.copy(
-                lyrics = lyricsContent,
-                lyricsType = lyricsType
-            )
-            updatedMusic to lyrics
-        }
-    }
 }

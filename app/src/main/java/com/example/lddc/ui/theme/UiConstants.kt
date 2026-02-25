@@ -38,8 +38,6 @@ object UiConstants {
         /** 中等阴影 - 普通卡片 */
         val Medium = 2.dp
 
-        /** 高阴影 - 突出卡片 */
-        val High = 4.dp
     }
 
     /**
@@ -64,14 +62,6 @@ object UiConstants {
         /** 巨大间距 */
         val XXLarge = 24.dp
 
-        /** 超大间距 - 用于横竖屏布局 */
-        val Huge = 32.dp
-
-        /** 巨大间距 - 用于横屏 */
-        val XHuge = 48.dp
-
-        /** 超大间距 - 用于横屏 */
-        val XXHuge = 64.dp
     }
 
     /**
@@ -124,36 +114,12 @@ object UiConstants {
         /** Logo 尺寸 */
         val Logo = 120.dp
 
-        /** 小图标 */
-        val IconSmall = 16.dp
-
         /** 中等图标 */
         val IconMedium = 24.dp
 
         /** 大图标 */
         val IconLarge = 48.dp
 
-        /** 封面小图 */
-        val CoverSmall = 60.dp
-
-        /** 封面中等 */
-        val CoverMedium = 100.dp
-
-        /** 封面大图 */
-        val CoverLarge = 200.dp
     }
 
-    /**
-     * 歌词显示区域高度
-     */
-    object LyricsHeight {
-        /** 默认高度 */
-        val Default = 300.dp
-
-        /** 最小高度 */
-        val Min = 200.dp
-
-        /** 最大高度 */
-        val Max = 400.dp
-    }
 }

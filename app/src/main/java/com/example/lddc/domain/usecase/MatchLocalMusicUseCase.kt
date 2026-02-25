@@ -65,27 +65,6 @@ class MatchLocalMusicUseCase(
     }
 
     /**
-     * 并行扫描指定目录
-     * 使用多线程并发处理，根据设备性能动态调整线程数
-     *
-     * @param directoryPath 目录路径
-     * @param includeSubDirs 是否包含子目录
-     * @param progressUpdateInterval 进度更新间隔
-     * @return 扫描进度和音乐信息流
-     */
-    fun scanDirectoryParallel(
-        directoryPath: String,
-        includeSubDirs: Boolean = true,
-        progressUpdateInterval: Int = 5
-    ): Flow<Pair<LocalMusicInfo, ScanProgress>> {
-        return localMusicRepository.scanDirectoryParallel(
-            directoryPath,
-            includeSubDirs,
-            progressUpdateInterval
-        )
-    }
-
-    /**
      * 匹配单首本地音乐
      *
      * @param music 本地音乐信息

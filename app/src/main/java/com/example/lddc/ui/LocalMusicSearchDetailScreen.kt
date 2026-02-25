@@ -251,7 +251,6 @@ private fun LocalMusicSearchDetailPortrait(
         SearchResultMusicInfoCard(
             music = music,
             formattedDuration = formattedDuration,
-            platformService = platformService,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -291,7 +290,6 @@ private fun LocalMusicSearchDetailLandscape(
         SearchResultMusicInfoCard(
             music = music,
             formattedDuration = formattedDuration,
-            platformService = platformService,
             modifier = Modifier
                 .weight(0.4f)
                 .fillMaxHeight()
@@ -318,7 +316,6 @@ private fun LocalMusicSearchDetailLandscape(
 private fun SearchResultMusicInfoCard(
     music: Music,
     formattedDuration: String,
-    platformService: PlatformService,
     modifier: Modifier = Modifier
 ) {
     Card(

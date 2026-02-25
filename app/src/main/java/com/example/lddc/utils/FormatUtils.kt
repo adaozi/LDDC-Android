@@ -48,42 +48,4 @@ object FormatUtils {
         }
     }
 
-    /**
-     * 格式化文件大小
-     *
-     * @param bytes 字节数
-     * @return 格式化后的文件大小字符串（如：1.5 MB）
-     */
-    fun formatFileSize(bytes: Long): String {
-        val kb = bytes / 1024.0
-        val mb = kb / 1024.0
-        val gb = mb / 1024.0
-
-        return when {
-            gb >= 1 -> String.format("%.2f GB", gb)
-            mb >= 1 -> String.format("%.2f MB", mb)
-            kb >= 1 -> String.format("%.2f KB", kb)
-            else -> "$bytes B"
-        }
-    }
-
-    /**
-     * 格式化比特率
-     *
-     * @param bitrate 比特率（bps）
-     * @return 格式化后的比特率字符串（如：320 kbps）
-     */
-    fun formatBitrate(bitrate: Int): String {
-        return "${bitrate / 1000} kbps"
-    }
-
-    /**
-     * 格式化采样率
-     *
-     * @param sampleRate 采样率（Hz）
-     * @return 格式化后的采样率字符串（如：44.1 kHz）
-     */
-    fun formatSampleRate(sampleRate: Int): String {
-        return "${sampleRate / 1000} kHz"
-    }
 }

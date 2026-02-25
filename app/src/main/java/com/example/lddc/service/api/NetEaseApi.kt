@@ -307,12 +307,12 @@ class NetEaseApi(private val httpClient: HttpClient) {
         )
 
         val data = request("/eapi/search/song/list/page", params)
-        val jsonData = data as? Map<String, Any> ?: emptyMap<String, Any>()
+        val jsonData = data as? Map<String, Any> ?: emptyMap()
 
         offset
 
         val resources = (jsonData["data"] as? Map<String, Any>)?.get("resources") as? List<Any>
-            ?: emptyList<Any>()
+            ?: emptyList()
         val formattedSongs = formatSongInfos(resources)
         (jsonData["data"] as? Map<String, Any>)?.get("totalCount") as? Number ?: formattedSongs.size
 
@@ -351,7 +351,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
         )
 
         val data = request("/eapi/song/lyric/v1", params)
-        val jsonData = data as? Map<String, Any> ?: emptyMap<String, Any>()
+        val jsonData = data as? Map<String, Any> ?: emptyMap()
 
         val lyrics = Lyrics(
             title = songInfo.title,

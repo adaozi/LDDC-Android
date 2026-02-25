@@ -151,19 +151,4 @@ object AppModule {
         }
     }
 
-    /**
-     * 重置所有依赖（用于测试）
-     */
-    fun reset() {
-        synchronized(this) {
-            localMusicRepository = null
-            lyricsRepository = null
-            lyricsApiService = null
-            lyricsService = null
-            searchSongsUseCase = null
-            getLyricsUseCase = null
-            filterAndSortMusicUseCase = null
-            matchLocalMusicUseCase = null
-        }
-    }
 }

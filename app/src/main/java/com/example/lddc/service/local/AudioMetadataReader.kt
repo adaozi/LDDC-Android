@@ -274,7 +274,7 @@ object AudioMetadataReader {
             Charsets.ISO_8859_1
         )
 
-        var bestResult: String = String(data, Charsets.UTF_8)
+        var bestResult = String(data, Charsets.UTF_8)
         var bestScore = -1
 
         for (charset in charsetsToTry) {
@@ -628,7 +628,7 @@ object AudioMetadataReader {
 
         // 5. 检查是否有大量乱码常见字符
         val commonGarbled =
-            content.count { it == '�' || it == '�' || it == '锟' || it == '斤' || it == '拷' }
+            content.count { it == '�' || it == '锟' || it == '斤' || it == '拷' }
         return commonGarbled > 0
     }
 
@@ -645,7 +645,7 @@ object AudioMetadataReader {
 
             // 查找 Vorbis Comment（通常在第一个 Vorbis 头之后）
             // 这里简化处理，尝试查找 Vorbis Comment 标记
-            parseOGGVorbisComment(data)
+            parseOGGVorbisComment()
         } catch (e: Exception) {
             Log.e(TAG, "读取 OGG 元数据失败", e)
             ExtendedMetadata()
@@ -655,7 +655,7 @@ object AudioMetadataReader {
     /**
      * 解析 OGG Vorbis Comment
      */
-    private fun parseOGGVorbisComment(data: ByteArray): ExtendedMetadata {
+    private fun parseOGGVorbisComment(): ExtendedMetadata {
         // OGG 解析比较复杂，这里简化处理
         // 实际应该解析 OGG 页结构
         return ExtendedMetadata()
@@ -676,7 +676,7 @@ object AudioMetadataReader {
                 return ExtendedMetadata()
             }
 
-            parseMP4Metadata(data)
+            parseMP4Metadata()
         } catch (e: Exception) {
             Log.e(TAG, "读取 MP4 元数据失败", e)
             ExtendedMetadata()
@@ -686,7 +686,7 @@ object AudioMetadataReader {
     /**
      * 解析 MP4 元数据
      */
-    private fun parseMP4Metadata(data: ByteArray): ExtendedMetadata {
+    private fun parseMP4Metadata(): ExtendedMetadata {
         // MP4 解析比较复杂，这里简化处理
         // 实际应该解析 moov/udta/meta 结构
         return ExtendedMetadata()
@@ -724,7 +724,7 @@ object AudioMetadataReader {
                 return ExtendedMetadata()
             }
 
-            parseASFMetadata(data)
+            parseASFMetadata()
         } catch (e: Exception) {
             Log.e(TAG, "读取 ASF/WMA 元数据失败", e)
             ExtendedMetadata()
@@ -734,7 +734,7 @@ object AudioMetadataReader {
     /**
      * 解析 ASF 元数据
      */
-    private fun parseASFMetadata(data: ByteArray): ExtendedMetadata {
+    private fun parseASFMetadata(): ExtendedMetadata {
         // ASF 解析比较复杂，这里简化处理
         return ExtendedMetadata()
     }
@@ -751,7 +751,7 @@ object AudioMetadataReader {
             }
 
             // APE 使用 APEv2 标签，通常在文件末尾
-            parseAPEv2Tag(data)
+            parseAPEv2Tag()
         } catch (e: Exception) {
             Log.e(TAG, "读取 APE 元数据失败", e)
             ExtendedMetadata()
@@ -761,7 +761,7 @@ object AudioMetadataReader {
     /**
      * 解析 APEv2 标签
      */
-    private fun parseAPEv2Tag(data: ByteArray): ExtendedMetadata {
+    private fun parseAPEv2Tag(): ExtendedMetadata {
         // APEv2 标签解析
         return ExtendedMetadata()
     }
@@ -786,7 +786,7 @@ object AudioMetadataReader {
             }
 
             // AIFF 使用 IFF 格式，元数据在 NAME、AUTH、ANNO 等块中
-            parseAIFFMetadata(data)
+            parseAIFFMetadata()
         } catch (e: Exception) {
             Log.e(TAG, "读取 AIFF 元数据失败", e)
             ExtendedMetadata()
@@ -796,7 +796,7 @@ object AudioMetadataReader {
     /**
      * 解析 AIFF 元数据
      */
-    private fun parseAIFFMetadata(data: ByteArray): ExtendedMetadata {
+    private fun parseAIFFMetadata(): ExtendedMetadata {
         // AIFF 解析
         return ExtendedMetadata()
     }
@@ -813,7 +813,7 @@ object AudioMetadataReader {
             }
 
             // WavPack 使用 APEv2 标签
-            parseAPEv2Tag(data)
+            parseAPEv2Tag()
         } catch (e: Exception) {
             Log.e(TAG, "读取 WavPack 元数据失败", e)
             ExtendedMetadata()
@@ -853,7 +853,7 @@ object AudioMetadataReader {
             }
 
             // Musepack 使用 APEv2 标签
-            parseAPEv2Tag(data)
+            parseAPEv2Tag()
         } catch (e: Exception) {
             Log.e(TAG, "读取 MPC 元数据失败", e)
             ExtendedMetadata()
@@ -933,7 +933,7 @@ object AudioMetadataReader {
         return try {
             val data = file.readBytes()
             // OptimFROG 使用 APEv2 标签
-            parseAPEv2Tag(data)
+            parseAPEv2Tag()
         } catch (e: Exception) {
             Log.e(TAG, "读取 OptimFROG 元数据失败", e)
             ExtendedMetadata()
@@ -951,7 +951,7 @@ object AudioMetadataReader {
                 return ExtendedMetadata()
             }
             // TAK 使用 APEv2 标签
-            parseAPEv2Tag(data)
+            parseAPEv2Tag()
         } catch (e: Exception) {
             Log.e(TAG, "读取 TAK 元数据失败", e)
             ExtendedMetadata()

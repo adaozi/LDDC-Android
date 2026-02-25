@@ -25,10 +25,6 @@ private val LINE_SPLIT_PATTERN = Regex("^\\[(\\d+):(\\d+)\\.(\\d+)](.*)$")
 private val ENHANCED_WORD_SPLIT_PATTERN =
     Regex("<(\\d+):(\\d+)\\.(\\d+)>((?:(?!<\\d+:\\d+\\.\\d+>).)*)(?:<(\\d+):(\\d+)\\.(\\d+)>)?")
 
-/** 单词分割模式 */
-private val WORD_SPLIT_PATTERN =
-    Regex("((?:(?!\\[\\d+:\\d+\\.\\d+]).)*)(?:\\[(\\d+):(\\d+)\\.(\\d+)])?")
-
 /** 多时间戳行匹配模式（网易云特殊格式） */
 private val MULTI_LINE_SPLIT_PATTERN = Regex("^((?:\\[\\d+:\\d+\\.\\d+]){2,})(.*)$")
 
@@ -64,7 +60,7 @@ private fun time2ms(minutes: String, seconds: String, millis: String): Long {
  *         歌词数据：按时间排序的歌词行列表
  */
 fun lrc2data(lrc: String, source: Source? = null): Pair<Map<String, String>, List<LyricsData>> {
-    val lrcLists = mutableListOf<LyricsData>(createLyricsData())
+    val lrcLists = mutableListOf(createLyricsData())
     val startTimeLists = mutableListOf<MutableList<Long?>>(mutableListOf())
     val tags = mutableMapOf<String, String>()
 
@@ -241,7 +237,7 @@ fun lyricsLine2str(
             // 逐字LRC：使用 [ ] 包裹时间戳
             val symbols = Pair("[", "]")
             // VERBATIMLRC 模式下，last_end 初始值为实际行开始时间（考虑覆盖值）
-            var lastEnd: Long? = actualLineStartTime ?: lyricsLine.start
+            var lastEnd: Long? = actualLineStartTime
 
             for (word in words) {
                 val (start, end, wordText) = word

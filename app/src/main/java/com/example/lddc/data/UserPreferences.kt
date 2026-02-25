@@ -64,12 +64,4 @@ class UserPreferences(private val context: Context) {
         }
     }
 
-    /**
-     * 清除所有偏好设置
-     */
-    suspend fun clearAll() {
-        context.dataStore.edit { preferences ->
-            preferences.clear()
-        }
-    }
 }

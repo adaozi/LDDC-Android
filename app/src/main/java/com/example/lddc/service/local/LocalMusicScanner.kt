@@ -792,7 +792,7 @@ class LocalMusicScanner(private val context: Context) {
             producerJob.join()
 
             val elapsedTime = System.currentTimeMillis() - startTime
-            val avgTimePerFile = if (totalCount > 0) elapsedTime / totalCount else 0
+            val avgTimePerFile = elapsedTime / totalCount
             Log.d(TAG, "并行扫描完成，共处理 $totalCount 个文件，找到 ${foundCount.get()} 首音乐")
             Log.d(TAG, "总耗时: ${elapsedTime}ms, 平均每个文件: ${avgTimePerFile}ms")
 
@@ -800,18 +800,6 @@ class LocalMusicScanner(private val context: Context) {
             executor.shutdown()
         }
     }.flowOn(Dispatchers.IO)
-
-    /**
-     * 根据文件路径获取单个音乐信息
-     */
-    fun getMusicInfo(filePath: String): LocalMusicInfo? {
-        val file = File(filePath)
-        if (!file.exists() || !file.isFile) {
-            return null
-        }
-
-        return createLocalMusicFromFile(file)
-    }
 
     /**
      * 收集目录中的所有音频文件
@@ -826,7 +814,7 @@ class LocalMusicScanner(private val context: Context) {
         for (file in files) {
             when {
                 file.isDirectory && includeSubDirs -> {
-                    collectAudioFiles(file, includeSubDirs, result)
+                    collectAudioFiles(file, true, result)
                 }
 
                 file.isFile && isAudioFile(file) -> {

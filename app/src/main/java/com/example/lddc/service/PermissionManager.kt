@@ -40,13 +40,6 @@ object PermissionManager {
     }
 
     /**
-     * 获取写入存储权限（Android 10 及以下）
-     */
-    fun getWriteStoragePermission(): String {
-        return Manifest.permission.WRITE_EXTERNAL_STORAGE
-    }
-
-    /**
      * 检查是否有管理所有文件的权限（Android 11+）
      * 注意：这个权限需要特殊申请，一般不建议使用
      */
@@ -79,27 +72,11 @@ object PermissionManager {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
     }
 
-    /**
-     * 获取所有需要的权限列表
-     */
-    fun getAllRequiredPermissions(): List<String> {
-        return mutableListOf<String>().apply {
-            add(getAudioPermission())
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                add(getWriteStoragePermission())
-            }
-        }
-    }
-
 }
 
 /**
  * 权限请求状态
  */
 sealed class PermissionState {
-    object Initial : PermissionState()
-    object Granted : PermissionState()
-    object Denied : PermissionState()
-    object ShowRationale : PermissionState()
 }
 

@@ -1,7 +1,6 @@
 package com.example.lddc.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,10 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -148,43 +145,6 @@ fun CopyableText(
 }
 
 /**
- * 信息标签组件
- *
- * @param text 标签文本
- * @param isAlbum 是否为专辑标签（使用不同颜色）
- */
-@Composable
-fun InfoChip(
-    text: String,
-    isAlbum: Boolean = false,
-    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.secondaryContainer,
-    contentColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSecondaryContainer
-) {
-    Box(
-        modifier = Modifier
-            .background(
-                color = if (isAlbum) {
-                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
-                } else {
-                    containerColor.copy(alpha = 0.6f)
-                },
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = text,
-            fontSize = 12.sp,
-            color = if (isAlbum) {
-                MaterialTheme.colorScheme.onSecondaryContainer
-            } else {
-                contentColor
-            }
-        )
-    }
-}
-
-/**
  * 歌词显示卡片
  *
  * @param lyrics 歌词内容
@@ -265,99 +225,6 @@ fun LyricsCard(
                     }
                 )
             }
-        }
-    }
-}
-
-/**
- * 可编辑歌词卡片
- *
- * @param lyrics 歌词内容
- * @param onLyricsChange 歌词变化回调
- * @param platformService 平台服务
- * @param onWriteLyrics 写入歌词回调
- * @param modifier 修饰符
- */
-@Composable
-fun EditableLyricsCard(
-    lyrics: String,
-    onLyricsChange: (String) -> Unit,
-    platformService: PlatformService,
-    onWriteLyrics: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            // 标题栏
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "歌词",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // 写入歌词按钮（如果有回调）
-                    if (onWriteLyrics != null && lyrics.isNotBlank() && !lyrics.startsWith("暂无歌词")) {
-                        Button(
-                            onClick = onWriteLyrics,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary
-                            )
-                        ) {
-                            Text("写入歌词")
-                        }
-                    }
-
-                    // 复制歌词按钮
-                    Button(
-                        onClick = {
-                            platformService.copyToClipboard("歌词", lyrics)
-                            platformService.showToast("歌词已复制")
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text("复制")
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 歌词内容（可编辑）
-            BasicTextField(
-                value = lyrics,
-                onValueChange = onLyricsChange,
-                readOnly = false,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    fontSize = 14.sp,
-                    lineHeight = 24.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            )
         }
     }
 }

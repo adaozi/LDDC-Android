@@ -289,7 +289,6 @@ fun LocalMusicListScreen(
                                     matchResults = matchResults,
                                     matchProgress = matchProgress,
                                     onMusicClick = onMusicSelected,
-                                    onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) },
                                     isLandscape = isLandscape
                                 )
                             }
@@ -302,7 +301,7 @@ fun LocalMusicListScreen(
                                 FolderMusicSplitView(
                                     folderList = folderList,
                                     musicByFolder = viewModel.musicByFolder.collectAsState().value,
-                                    selectedFolder = selectedFolder,
+                                    selectedFolder = null,
                                     displayedMusicList = displayedMusicList,
                                     matchResults = matchResults,
                                     matchProgress = matchProgress,
@@ -320,7 +319,7 @@ fun LocalMusicListScreen(
                                     onFolderClick = { folder ->
                                         viewModel.selectFolder(folder)
                                     },
-                                    isLandscape = isLandscape
+                                    isLandscape = false
                                 )
                             } else {
                                 // 显示选中文件夹的音乐
@@ -332,11 +331,6 @@ fun LocalMusicListScreen(
                                         matchResults = matchResults,
                                         matchProgress = matchProgress,
                                         onMusicClick = onMusicSelected,
-                                        onStartMatch = {
-                                            viewModel.showSaveModeDialog(
-                                                displayedMusicList
-                                            )
-                                        },
                                         isLandscape = isLandscape
                                     )
                                 }
@@ -633,7 +627,6 @@ private fun FolderMusicSplitView(
                     matchResults = matchResults,
                     matchProgress = matchProgress,
                     onMusicClick = onMusicClick,
-                    onStartMatch = onStartMatch,
                     isLandscape = true
                 )
             }
@@ -857,7 +850,6 @@ private fun MusicListContent(
     matchResults: List<LocalMusicMatchResult>,
     matchProgress: com.example.lddc.model.MatchProgress,
     onMusicClick: (LocalMusicInfo) -> Unit,
-    onStartMatch: () -> Unit,
     isLandscape: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -894,7 +886,6 @@ private fun MusicListContent(
                     val matchResult = matchResults.find { it.localMusic.id == music.id }
                     LocalMusicGridItem(
                         music = music,
-                        matchResult = matchResult,
                         onClick = { onMusicClick(music) }
                     )
                 }
@@ -914,7 +905,6 @@ private fun MusicListContent(
                     val matchResult = matchResults.find { it.localMusic.id == music.id }
                     LocalMusicListItem(
                         music = music,
-                        matchResult = matchResult,
                         onClick = { onMusicClick(music) }
                     )
                 }
@@ -1013,7 +1003,6 @@ private fun MatchingProgressBar(
 @Composable
 private fun LocalMusicListItem(
     music: LocalMusicInfo,
-    matchResult: LocalMusicMatchResult?,
     onClick: () -> Unit
 ) {
     LocalMusicCard(
@@ -1028,7 +1017,6 @@ private fun LocalMusicListItem(
 @Composable
 private fun LocalMusicGridItem(
     music: LocalMusicInfo,
-    matchResult: LocalMusicMatchResult?,
     onClick: () -> Unit
 ) {
     LocalMusicCard(

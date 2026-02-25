@@ -245,7 +245,7 @@ class QQMusicApi(private val httpClient: HttpClient) {
         val startIndex = (page - 1) * pagesize
 
         val songInfos =
-            (data["body"] as? Map<String, Any>)?.get("item_song") as? List<Any> ?: emptyList<Any>()
+            (data["body"] as? Map<String, Any>)?.get("item_song") as? List<Any> ?: emptyList()
         val formattedSongs = formatSongInfos(songInfos)
         if (formattedSongs.size == pagesize) {
             (data["meta"] as? Map<String, Any>)?.get("sum") as? Number ?: formattedSongs.size

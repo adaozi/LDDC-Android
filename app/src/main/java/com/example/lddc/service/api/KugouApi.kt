@@ -445,7 +445,7 @@ class KugouApi(private val httpClient: HttpClient) {
             "Lyric"
         )
 
-        val candidates = (response["candidates"] as? List<Any>) ?: emptyList<Any>()
+        val candidates = (response["candidates"] as? List<Any>) ?: emptyList()
         Log.d("KugouApi", "Found ${candidates.size} lyric candidates")
         if (candidates.isNotEmpty()) {
             Log.d("KugouApi", "First candidate keys: ${(candidates[0] as? Map<*, *>)?.keys}")
@@ -498,7 +498,7 @@ class KugouApi(private val httpClient: HttpClient) {
                 else -> 0
             }
             val transParam =
-                (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap<String, Any>()
+                (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap()
             val language =
                 LANGUAGE_MAPPING[transParam["language"] as? String ?: ""] ?: Language.OTHER
             val image = songMap["Image"] as? String ?: ""
@@ -544,7 +544,7 @@ class KugouApi(private val httpClient: HttpClient) {
             val album = songMap["album_name"] as? String ?: ""
             val duration = (songMap["duration"] as? Number)?.toLong() ?: 0
             val transParam =
-                (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap<String, Any>()
+                (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap()
             val language =
                 LANGUAGE_MAPPING[transParam["language"] as? String ?: ""] ?: Language.OTHER
             val image = songMap["Image"] as? String ?: ""

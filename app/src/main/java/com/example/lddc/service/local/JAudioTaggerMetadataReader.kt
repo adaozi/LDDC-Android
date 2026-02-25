@@ -302,13 +302,3 @@ class JAudioTaggerMetadataReader {
 
 }
 
-/**
- * 音频格式信息数据类
- */
-data class AudioFormatInfo(
-    val format: String,
-    val bitrate: Int?,
-    val sampleRate: Int?,
-    val channels: String?,
-    val duration: Long
-)

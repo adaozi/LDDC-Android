@@ -233,43 +233,6 @@ class JAudioTaggerLyricsReader {
     }
 
     /**
-     * 简单的编码检测
-     */
-    private fun detectEncoding(data: ByteArray): String {
-        // 检查 UTF-8 BOM
-        if (data.size >= 3 &&
-            data[0] == 0xEF.toByte() &&
-            data[1] == 0xBB.toByte() &&
-            data[2] == 0xBF.toByte()
-        ) {
-            return "UTF-8 with BOM"
-        }
-
-        // 检查 UTF-16 LE BOM
-        if (data.size >= 2 &&
-            data[0] == 0xFF.toByte() &&
-            data[1] == 0xFE.toByte()
-        ) {
-            return "UTF-16 LE"
-        }
-
-        // 检查 UTF-16 BE BOM
-        if (data.size >= 2 &&
-            data[0] == 0xFE.toByte() &&
-            data[1] == 0xFF.toByte()
-        ) {
-            return "UTF-16 BE"
-        }
-
-        // 尝试检测是否为有效的 UTF-8
-        return if (isValidUTF8(data)) {
-            "UTF-8"
-        } else {
-            "可能需要编码转换"
-        }
-    }
-
-    /**
      * 检查是否为有效的 UTF-8
      */
     private fun isValidUTF8(data: ByteArray): Boolean {

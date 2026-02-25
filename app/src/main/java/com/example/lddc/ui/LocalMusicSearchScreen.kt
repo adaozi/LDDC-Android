@@ -94,7 +94,7 @@ fun LocalMusicSearchScreen(
 
     // 使用 remember 和 derivedStateOf 实现响应式筛选
     val filteredResults: List<Music> by remember(searchResults, searchFilters) {
-        derivedStateOf<List<Music>> {
+        derivedStateOf {
             viewModel.getFilteredResults()
         }
     }
@@ -129,7 +129,6 @@ fun LocalMusicSearchScreen(
                 )
             )
 
-            hasSearched = true
             viewModel.searchSongsWithFilter(keyword, music)
         }
     }
@@ -173,7 +172,7 @@ fun LocalMusicSearchScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showFilterDialog = true }) {
+                    IconButton(onClick = { }) {
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = "筛选",
@@ -260,7 +259,7 @@ fun LocalMusicSearchScreen(
                 onFiltersChanged = { newFilters ->
                     viewModel.updateSearchFilters(newFilters)
                 },
-                onDismiss = { showFilterDialog = false }
+                onDismiss = { }
             )
         }
     }
@@ -306,8 +305,6 @@ private fun LocalSearchPortraitResults(
                         scrollOffset != lastFirstVisibleScrollOffset
 
                 // 更新上次状态
-                lastFirstVisibleItem = firstIndex
-                lastFirstVisibleScrollOffset = scrollOffset
 
                 // 同时满足：滑到底部 + 正在滑动
                 if (isNearBottom && isScrolling) {
@@ -411,8 +408,6 @@ private fun LocalSearchLandscapeResults(
                         scrollOffset != lastFirstVisibleScrollOffset
 
                 // 更新上次状态
-                lastFirstVisibleItem = firstIndex
-                lastFirstVisibleScrollOffset = scrollOffset
 
                 // 同时满足：滑到底部 + 正在滑动
                 if (isNearBottom && isScrolling) {

@@ -7,10 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.lddc.data.UserPreferences
 import com.example.lddc.di.AppModule
 import com.example.lddc.domain.usecase.FilterAndSortMusicUseCase
-import com.example.lddc.domain.usecase.GetLyricsUseCase
 import com.example.lddc.domain.usecase.MatchLocalMusicUseCase
 import com.example.lddc.domain.usecase.MatchProgressResult
-import com.example.lddc.domain.usecase.SearchSongsUseCase
 import com.example.lddc.model.LocalMusicInfo
 import com.example.lddc.model.LocalMusicMatchResult
 import com.example.lddc.model.LocalMusicMatchStatus
@@ -51,9 +49,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     // UseCase层依赖（通过DI获取）
     private val matchLocalMusicUseCase: MatchLocalMusicUseCase =
         AppModule.provideMatchLocalMusicUseCase(application)
-    private val searchSongsUseCase: SearchSongsUseCase =
-        AppModule.provideSearchSongsUseCase(application)
-    private val getLyricsUseCase: GetLyricsUseCase = AppModule.provideGetLyricsUseCase(application)
     private val filterAndSortMusicUseCase: FilterAndSortMusicUseCase =
         AppModule.provideFilterAndSortMusicUseCase()
     private val userPreferences: UserPreferences = UserPreferences(application)
@@ -87,7 +82,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     val showSaveModeDialog: StateFlow<Boolean> = _showSaveModeDialog.asStateFlow()
 
     private val _pendingMatchList = MutableStateFlow<List<LocalMusicInfo>?>(null)
-    val pendingMatchList: StateFlow<List<LocalMusicInfo>?> = _pendingMatchList.asStateFlow()
 
     private val _defaultSaveMode = MutableStateFlow(LyricsWriteMode.EMBEDDED)
     val defaultSaveMode: StateFlow<LyricsWriteMode> = _defaultSaveMode.asStateFlow()
@@ -105,7 +99,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
 
     // ==================== 搜索相关 ====================
     private val _searchKeyword = MutableStateFlow("")
-    val searchKeyword: StateFlow<String> = _searchKeyword.asStateFlow()
 
     private val _searchResults = MutableStateFlow<List<Music>>(emptyList())
     val searchResults: StateFlow<List<Music>> = _searchResults.asStateFlow()
@@ -130,7 +123,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     val hasMoreData: StateFlow<Boolean> = _hasMoreData.asStateFlow()
 
     private val _currentPage = MutableStateFlow(1)
-    val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
 
     private val _isLoadingLyrics = MutableStateFlow(false)
     val isLoadingLyrics: StateFlow<Boolean> = _isLoadingLyrics.asStateFlow()
@@ -144,7 +136,7 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     // ==================== 视图模式 ====================
-    private val _viewMode = MutableStateFlow<ViewMode>(ViewMode.LIST)
+    private val _viewMode = MutableStateFlow(ViewMode.LIST)
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
 
     private val _selectedFolder = MutableStateFlow<String?>(null)

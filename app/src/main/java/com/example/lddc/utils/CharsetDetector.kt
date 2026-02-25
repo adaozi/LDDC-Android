@@ -120,9 +120,6 @@ object CharsetDetector {
 
                 // 中文字符范围：0x4E00-0x9FA5 (CJK Unified Ideographs)
                 // 中文标点：0x3000-0x303F
-                if (codePoint in 0x4E00..0x9FA5 || codePoint in 0x3000..0x303F) {
-                    // 可能是中文，继续检查
-                }
 
                 i += 3
                 continue

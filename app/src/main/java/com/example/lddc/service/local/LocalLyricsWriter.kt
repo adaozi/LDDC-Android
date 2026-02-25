@@ -95,10 +95,10 @@ class LocalLyricsWriter(private val context: Context) {
         try {
             when (extension) {
                 "mp3" -> writeMp3Lyrics(filePath, lyrics)
-                "flac" -> writeFlacLyrics(filePath, lyrics)
-                "m4a", "mp4" -> writeM4aLyrics(filePath, lyrics)
-                "ogg", "opus" -> writeOggLyrics(filePath, lyrics)
-                "wma" -> writeWmaLyrics(filePath, lyrics)
+                "flac" -> writeFlacLyrics()
+                "m4a", "mp4" -> writeM4aLyrics()
+                "ogg", "opus" -> writeOggLyrics()
+                "wma" -> writeWmaLyrics()
                 else -> LyricsWriteResult(
                     success = false,
                     errorMessage = "不支持的文件格式: $extension"
@@ -176,7 +176,7 @@ class LocalLyricsWriter(private val context: Context) {
     /**
      * 写入 FLAC 歌词 (Vorbis Comment)
      */
-    private fun writeFlacLyrics(filePath: String, lyrics: String): LyricsWriteResult {
+    private fun writeFlacLyrics(): LyricsWriteResult {
         // FLAC 使用 Vorbis Comment
         // 需要专门的库或手动解析 FLAC 文件结构
         return LyricsWriteResult(
@@ -188,7 +188,7 @@ class LocalLyricsWriter(private val context: Context) {
     /**
      * 写入 M4A 歌词 (iTunes 风格)
      */
-    private fun writeM4aLyrics(filePath: String, lyrics: String): LyricsWriteResult {
+    private fun writeM4aLyrics(): LyricsWriteResult {
         // M4A/MP4 使用 iTunes 风格的元数据
         return LyricsWriteResult(
             success = false,
@@ -199,7 +199,7 @@ class LocalLyricsWriter(private val context: Context) {
     /**
      * 写入 OGG 歌词 (Vorbis Comment)
      */
-    private fun writeOggLyrics(filePath: String, lyrics: String): LyricsWriteResult {
+    private fun writeOggLyrics(): LyricsWriteResult {
         return LyricsWriteResult(
             success = false,
             errorMessage = "OGG 歌词写入暂未实现"
@@ -209,7 +209,7 @@ class LocalLyricsWriter(private val context: Context) {
     /**
      * 写入 WMA 歌词
      */
-    private fun writeWmaLyrics(filePath: String, lyrics: String): LyricsWriteResult {
+    private fun writeWmaLyrics(): LyricsWriteResult {
         return LyricsWriteResult(
             success = false,
             errorMessage = "WMA 歌词写入暂未实现"
@@ -908,7 +908,7 @@ class LocalLyricsWriter(private val context: Context) {
 
         // 5. 检查是否有大量乱码常见字符
         val commonGarbled =
-            content.count { it == '�' || it == '�' || it == '锟' || it == '斤' || it == '拷' }
+            content.count { it == '�' || it == '锟' || it == '斤' || it == '拷' }
         return commonGarbled > 0
     }
 }

@@ -85,7 +85,7 @@ fun FilterDialog(
                 // 平台筛选（下拉菜单）
                 var platformExpanded by remember { mutableStateOf(false) }
                 val platformOptions = listOf(
-                    "全部平台" to emptySet<String>(),
+                    "全部平台" to emptySet(),
                     "QQ音乐" to setOf("QM"),
                     "网易云音乐" to setOf("NE"),
                     "酷狗音乐" to setOf("KG")
