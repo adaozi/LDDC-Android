@@ -22,7 +22,7 @@
 
 | 项目 | 值 |
 |------|-----|
-| 版本号 | 1.1 (versionCode: 2) |
+| 版本号 | 1.01 (versionCode: 2) |
 | 最低 Android 版本 | Android 7.0 (API 24) |
 | 目标 Android 版本 | Android 15 (API 36) |
 
