@@ -81,7 +81,8 @@ fun SearchScreen(
 
     // 检测屏幕方向
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // 使用独立的本地状态管理输入，避免Compose状态更新延迟问题
     var keywordInput by remember { mutableStateOf("") }
@@ -124,13 +125,28 @@ fun SearchScreen(
                     // 左侧：品牌区域
                     BrandSection(modifier = Modifier.weight(1f))
 
-                    // 右侧：搜索区域
-                    SearchSection(
-                        keyword = keywordInput,
-                        onKeywordChange = { keywordInput = it },
-                        onSearch = { performSearch() },
-                        modifier = Modifier.weight(1f)
-                    )
+                    // 右侧：搜索区域和本地音乐入口
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SearchSection(
+                            keyword = keywordInput,
+                            onKeywordChange = { keywordInput = it },
+                            onSearch = { performSearch() },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // 本地音乐入口
+                        if (onLocalMusicClick != null) {
+                            Spacer(modifier = Modifier.height(UiConstants.Spacing.XLarge))
+
+                            LocalMusicEntry(
+                                onClick = onLocalMusicClick,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                 }
             } else {
                 // 竖屏布局

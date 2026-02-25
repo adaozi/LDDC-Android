@@ -65,29 +65,6 @@ class JAudioTaggerMetadataReader {
     }
 
     /**
-     * 只读取基本元数据（无时长的轻量级读取）
-     */
-    fun readBasicMetadata(filePath: String): AudioMetadata? {
-        return try {
-            val file = File(filePath)
-            if (!file.exists()) return null
-
-            val audioFile = AudioFileIO.read(file)
-            val tag = audioFile.tag
-            val header = audioFile.audioHeader
-
-            if (tag == null) {
-                return createBasicMetadata(filePath, header)
-            }
-
-            createAudioMetadata(filePath, tag, header)
-        } catch (e: Exception) {
-            Log.e(TAG, "读取基本元数据失败: $filePath", e)
-            null
-        }
-    }
-
-    /**
      * 读取专辑封面
      * 支持多种音频格式，包括 WAV 文件的特殊处理
      */
@@ -115,7 +92,10 @@ class JAudioTaggerMetadataReader {
             val artwork = artworkList.firstOrNull()
             if (artwork != null) {
                 val imageData = artwork.binaryData
-                Log.d(TAG, "读取到 artwork，大小: ${imageData.size} bytes, 类型: ${artwork.mimeType}")
+                Log.d(
+                    TAG,
+                    "读取到 artwork，大小: ${imageData.size} bytes, 类型: ${artwork.mimeType}"
+                )
 
                 // 尝试解码图片
                 val bitmap = BitmapFactory.decodeStream(ByteArrayInputStream(imageData))
@@ -173,7 +153,8 @@ class JAudioTaggerMetadataReader {
             // 方法3: 检查是否有额外的 artwork
             if (tag.artworkList.size > 1) {
                 for ((index, art) in tag.artworkList.withIndex()) {
-                    val bitmap = BitmapFactory.decodeByteArray(art.binaryData, 0, art.binaryData.size)
+                    val bitmap =
+                        BitmapFactory.decodeByteArray(art.binaryData, 0, art.binaryData.size)
                     if (bitmap != null) {
                         Log.d(TAG, "从 artworkList[$index] 成功解码图片")
                         return bitmap
@@ -242,7 +223,11 @@ class JAudioTaggerMetadataReader {
     /**
      * 创建完整的 AudioMetadata 对象
      */
-    private fun createAudioMetadata(filePath: String, tag: Tag, header: AudioHeader): AudioMetadata {
+    private fun createAudioMetadata(
+        filePath: String,
+        tag: Tag,
+        header: AudioHeader
+    ): AudioMetadata {
         val file = File(filePath)
 
         // 读取原始字段值并修复编码
@@ -258,8 +243,10 @@ class JAudioTaggerMetadataReader {
         // 修复编码问题
         val title = CharsetDetector.fixGarbledText(rawTitle).takeIf { it.isNotBlank() }
             ?: file.nameWithoutExtension
-        val artist = CharsetDetector.fixGarbledText(rawArtist).takeIf { it.isNotBlank() } ?: "未知艺术家"
-        val album = CharsetDetector.fixGarbledText(rawAlbum).takeIf { it.isNotBlank() } ?: "未知专辑"
+        val artist =
+            CharsetDetector.fixGarbledText(rawArtist).takeIf { it.isNotBlank() } ?: "未知艺术家"
+        val album =
+            CharsetDetector.fixGarbledText(rawAlbum).takeIf { it.isNotBlank() } ?: "未知专辑"
         val year = CharsetDetector.fixGarbledText(rawYear).takeIf { it.isNotBlank() }
         val genre = CharsetDetector.fixGarbledText(rawGenre).takeIf { it.isNotBlank() }
         val comment = CharsetDetector.fixGarbledText(rawComment).takeIf { it.isNotBlank() }
@@ -313,61 +300,6 @@ class JAudioTaggerMetadataReader {
         )
     }
 
-    /**
-     * 获取音频文件格式信息
-     */
-    fun getAudioFormat(filePath: String): AudioFormatInfo? {
-        return try {
-            val file = File(filePath)
-            if (!file.exists()) return null
-
-            val audioFile = AudioFileIO.read(file)
-            val header = audioFile.audioHeader
-
-            AudioFormatInfo(
-                format = header.format,
-                bitrate = header.bitRate?.toIntOrNull(),
-                sampleRate = header.sampleRate?.toIntOrNull(),
-                channels = header.channels,
-                duration = (header.trackLength * 1000).toLong()
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "获取音频格式失败: $filePath", e)
-            null
-        }
-    }
-
-    /**
-     * 获取所有标签字段（用于调试）
-     */
-    fun getAllFields(filePath: String): Map<String, String> {
-        return try {
-            val file = File(filePath)
-            if (!file.exists()) return emptyMap()
-
-            val audioFile = AudioFileIO.read(file)
-            val tag = audioFile.tag ?: return emptyMap()
-
-            val fields = mutableMapOf<String, String>()
-
-            // 遍历所有字段
-            for (fieldKey in FieldKey.values()) {
-                try {
-                    val value = tag.getFirst(fieldKey)
-                    if (value.isNotBlank()) {
-                        fields[fieldKey.name] = value
-                    }
-                } catch (e: Exception) {
-                    // 忽略不支持的字段
-                }
-            }
-
-            fields
-        } catch (e: Exception) {
-            Log.e(TAG, "获取所有字段失败: $filePath", e)
-            emptyMap()
-        }
-    }
 }
 
 /**

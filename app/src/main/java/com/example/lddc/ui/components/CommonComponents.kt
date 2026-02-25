@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.lddc.model.LocalMusicInfo
-import com.example.lddc.model.Music
 
 /**
  * 公共UI组件库
@@ -132,34 +131,6 @@ fun MusicCard(
 }
 
 /**
- * 网络搜索结果用的歌曲卡片
- */
-@Composable
-fun NetworkMusicCard(
-    music: Music,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    MusicCard(
-        title = music.title,
-        artist = music.artist,
-        album = music.album,
-        imageUrl = music.imageUrl.takeIf { it.isNotEmpty() && it != "default" },
-        extraInfo = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(top = 4.dp)
-            ) {
-                InfoChip(text = music.duration)
-                InfoChip(text = music.platform)
-            }
-        },
-        onClick = onClick,
-        modifier = modifier
-    )
-}
-
-/**
  * 本地音乐用的歌曲卡片
  */
 @Composable
@@ -170,7 +141,7 @@ fun LocalMusicCard(
 ) {
     // 使用专辑封面 URI 或 null
     val albumArtUri = music.albumArtUri?.toString()
-    
+
     MusicCard(
         title = music.title,
         artist = music.artist,
@@ -220,7 +191,7 @@ fun AlbumCover(
                 // 网络URL
                 imageUrl
             }
-            
+
             AsyncImage(
                 model = imageModel,
                 contentDescription = "专辑封面",
@@ -289,6 +260,7 @@ fun LoadMoreIndicator(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
             hasMoreData -> {
                 Text(
                     text = "点击加载更多",
@@ -296,6 +268,7 @@ fun LoadMoreIndicator(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
             else -> {
                 Text(
                     text = "没有更多数据了",
@@ -323,23 +296,6 @@ fun EmptyState(
             text = message,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * 加载状态组件
- */
-@Composable
-fun LoadingState(
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            color = MaterialTheme.colorScheme.primary
         )
     }
 }

@@ -32,7 +32,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         private const val TAG = "MusicViewModel"
     }
 
-    private val filterAndSortMusicUseCase: FilterAndSortMusicUseCase = AppModule.provideFilterAndSortMusicUseCase()
+    private val filterAndSortMusicUseCase: FilterAndSortMusicUseCase =
+        AppModule.provideFilterAndSortMusicUseCase()
 
     // 直接使用 LyricsApiServiceImpl 获取歌词（保留原始 SongInfo）
     private val lyricsApiService = LyricsApiServiceImpl()
@@ -158,7 +159,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 _searchResults.value = musicResults
                 _hasMoreData.value = musicResults.size >= PAGE_SIZE
 
-                Log.d(TAG, "搜索成功，转换后歌曲数: ${musicResults.size}, hasMoreData: ${_hasMoreData.value}")
+                Log.d(
+                    TAG,
+                    "搜索成功，转换后歌曲数: ${musicResults.size}, hasMoreData: ${_hasMoreData.value}"
+                )
 
             } catch (e: Exception) {
                 Log.e(TAG, "搜索失败", e)

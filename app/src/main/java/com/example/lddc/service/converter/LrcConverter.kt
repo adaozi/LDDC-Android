@@ -1,7 +1,14 @@
 package com.example.lddc.service.converter
 
 import com.example.lddc.model.LyricsFormat
-import com.example.lddc.service.parser.*
+import com.example.lddc.service.parser.LyricsData
+import com.example.lddc.service.parser.LyricsLine
+import com.example.lddc.service.parser.LyricsWord
+import com.example.lddc.service.parser.MultiLyricsData
+import com.example.lddc.service.parser.createLyricsData
+import com.example.lddc.service.parser.lyricsLine2str
+import com.example.lddc.service.parser.ms2formattime
+import com.example.lddc.service.parser.ms2roundedtime
 
 /**
  * LRC 歌词转换器
@@ -35,14 +42,17 @@ fun formatTimeSub1(formattime: String): String {
             val newMs = (ms.toInt() - 1).toString().padStart(msLen, '0')
             "$m:$s.$newMs"
         }
+
         s != "00" -> {
             s = (s.toInt() - 1).toString().padStart(2, '0')
             "$m:$s.${"0".repeat(msLen)}"
         }
+
         m != "00" -> {
             m = (m.toInt() - 1).toString().padStart(2, '0')
             "$m:59.${"0".repeat(msLen)}"
         }
+
         else -> formattime
     }
 }
@@ -106,7 +116,14 @@ fun lrcConverter(
         }
 
         // 获取各语言的歌词行
-        val lyricsLines = getLyricsLines(lyricsDict, langsOrder, origIndex, origLine, langsMapping, lastRefLineTimeSty)
+        val lyricsLines = getLyricsLines(
+            lyricsDict,
+            langsOrder,
+            origIndex,
+            origLine,
+            langsMapping,
+            lastRefLineTimeSty
+        )
 
         for ((lyricsLine, lastSub1) in lyricsLines) {
             if (!lastSub1) {
@@ -130,11 +147,13 @@ fun lrcConverter(
                             nextLine.start
                         }
                     }
+
                     lineEndTime != null -> lineEndTime + 10
                     lineStartTime != null -> lineStartTime + 10
                     else -> null
                 }
-                val tsSub1FormatTime = tsSub1StartTime?.let { formatTimeSub1(msConverter(it)) } ?: ""
+                val tsSub1FormatTime =
+                    tsSub1StartTime?.let { formatTimeSub1(msConverter(it)) } ?: ""
 
                 val text = if (tsSub1FormatTime.isNotEmpty()) "[$tsSub1FormatTime]" else ""
                 lrcText.append(text)
@@ -207,7 +226,8 @@ fun getLyricsLines(
         if (!hasContent) continue
 
         // 判断是否是 lastSub1 行（最后一行参考行时间样式）
-        val isLastSub1 = lastRefLineTimeSty == 1 && i == langsOrder.size - 1 && lyricsLine.words.size == 1
+        val isLastSub1 =
+            lastRefLineTimeSty == 1 && i == langsOrder.size - 1 && lyricsLine.words.size == 1
 
         result.add(Pair(lyricsLine, isLastSub1))
     }

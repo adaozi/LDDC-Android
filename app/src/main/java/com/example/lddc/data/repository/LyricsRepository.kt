@@ -7,9 +7,9 @@ import com.example.lddc.model.SearchType
 import com.example.lddc.model.SongInfo
 import com.example.lddc.model.Source
 import com.example.lddc.service.LyricsApiService
-import com.example.lddc.service.LyricsService
-import com.example.lddc.service.LyricsOutputFormat
 import com.example.lddc.service.LyricsConvertOptions
+import com.example.lddc.service.LyricsOutputFormat
+import com.example.lddc.service.LyricsService
 
 /**
  * 歌词仓库接口

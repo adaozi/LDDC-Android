@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -41,7 +40,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +64,8 @@ import com.example.lddc.service.LyricsService
 import com.example.lddc.service.MusicFilterService
 import com.example.lddc.service.PlatformService
 import com.example.lddc.ui.components.InfoChip
-import com.example.lddc.ui.theme.UiConstants
+import com.example.lddc.utils.LyricsUtils
+import com.example.lddc.utils.PlatformUtils
 import com.example.lddc.viewmodel.LocalMatchViewModel
 
 /**
@@ -88,7 +87,6 @@ fun LocalMusicSearchDetailScreen(
     val platformService = remember { PlatformService(context) }
     val filterService = remember { MusicFilterService() }
     val lyricsService = remember { LyricsService(context) }
-    rememberCoroutineScope()
 
     // 加载歌词
     LaunchedEffect(selectedSearchResult) {
@@ -101,7 +99,8 @@ fun LocalMusicSearchDetailScreen(
 
     // 横竖屏检测
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // 转换歌词用于显示
     val displayLyrics = selectedSearchResult?.let { music ->
@@ -111,15 +110,21 @@ fun LocalMusicSearchDetailScreen(
                     // 根据歌词内容自动检测来源平台
                     val detectedSource = when {
                         music.lyrics.contains("<Lyric_1") -> Source.QM  // QRC格式
-                        music.lyrics.contains("[00:") && music.lyrics.contains("<") && 
-                            music.lyrics.contains(">") -> Source.KG  // KRC格式
-                        music.lyrics.contains("[") && music.lyrics.contains("](") && 
-                            music.lyrics.contains(")") -> Source.NE  // YRC格式
+                        music.lyrics.contains("[00:") && music.lyrics.contains("<") &&
+                                music.lyrics.contains(">") -> Source.KG  // KRC格式
+                        music.lyrics.contains("[") && music.lyrics.contains("](") &&
+                                music.lyrics.contains(")") -> Source.NE  // YRC格式
                         else -> Source.NE  // 默认LRC格式
                     }
 
-                    android.util.Log.d("LocalMusicSearchDetail", "Lyrics type: ${music.lyricsType}, detected source: $detectedSource")
-                    android.util.Log.d("LocalMusicSearchDetail", "Lyrics first 100 chars: ${music.lyrics.take(100)}")
+                    android.util.Log.d(
+                        "LocalMusicSearchDetail",
+                        "Lyrics type: ${music.lyricsType}, detected source: $detectedSource"
+                    )
+                    android.util.Log.d(
+                        "LocalMusicSearchDetail",
+                        "Lyrics first 100 chars: ${music.lyrics.take(100)}"
+                    )
 
                     val lyrics = Lyrics(
                         title = music.title,
@@ -138,7 +143,11 @@ fun LocalMusicSearchDetailScreen(
                         options = options
                     )
                 } catch (e: Exception) {
-                    android.util.Log.e("LocalMusicSearchDetail", "Failed to convert lyrics: ${e.message}", e)
+                    android.util.Log.e(
+                        "LocalMusicSearchDetail",
+                        "Failed to convert lyrics: ${e.message}",
+                        e
+                    )
                     music.lyrics
                 }
             } else {
@@ -153,7 +162,7 @@ fun LocalMusicSearchDetailScreen(
                 title = {
                     Text(
                         text = "歌曲详情",
-                        fontSize = UiConstants.FontSize.XLarge,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -210,7 +219,7 @@ fun LocalMusicSearchDetailScreen(
                 ) {
                     Text(
                         text = "未找到歌曲信息",
-                        fontSize = UiConstants.FontSize.Large,
+                        fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -220,7 +229,7 @@ fun LocalMusicSearchDetailScreen(
 }
 
 /**
- * 竖屏布局
+ * 竖屏布局 - 参考网络搜索详情页设计
  */
 @Composable
 private fun LocalMusicSearchDetailPortrait(
@@ -235,34 +244,33 @@ private fun LocalMusicSearchDetailPortrait(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(UiConstants.Padding.Large)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // 歌曲信息卡片
-        MusicInfoCard(
+        SearchResultMusicInfoCard(
             music = music,
             formattedDuration = formattedDuration,
-            isLandscape = false
+            platformService = platformService,
+            modifier = Modifier.fillMaxWidth()
         )
-
-        Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
 
         // 歌词卡片（包含使用此歌词按钮）
-        LyricsCard(
+        SearchResultLyricsCard(
             lyrics = displayLyrics,
             originalLyrics = music.lyrics,
-            lyricsType = music.lyricsType,
             isLoading = isLoadingLyrics,
-            platformService = platformService,
             onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) },
-            isLandscape = false
+            platformService = platformService,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
         )
-
-        Spacer(modifier = Modifier.height(UiConstants.Spacing.Large))
     }
 }
 
 /**
- * 横屏布局
+ * 横屏布局 - 参考网络搜索详情页设计
  */
 @Composable
 private fun LocalMusicSearchDetailLandscape(
@@ -276,72 +284,63 @@ private fun LocalMusicSearchDetailLandscape(
     Row(
         modifier = Modifier
             .fillMaxSize()
-            .padding(UiConstants.Padding.XLarge)
+            .padding(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        // 左侧：歌曲信息
-        Column(
+        // 左侧：歌曲信息卡片
+        SearchResultMusicInfoCard(
+            music = music,
+            formattedDuration = formattedDuration,
+            platformService = platformService,
             modifier = Modifier
                 .weight(0.4f)
                 .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-        ) {
-            MusicInfoCard(
-                music = music,
-                formattedDuration = formattedDuration,
-                isLandscape = true
-            )
-        }
+        )
 
-        Spacer(modifier = Modifier.width(UiConstants.Spacing.XXLarge))
-
-        // 右侧：歌词
-        Box(
+        // 右侧：歌词卡片
+        SearchResultLyricsCard(
+            lyrics = displayLyrics,
+            originalLyrics = music.lyrics,
+            isLoading = isLoadingLyrics,
+            onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) },
+            platformService = platformService,
             modifier = Modifier
                 .weight(0.6f)
                 .fillMaxHeight()
-        ) {
-            LyricsCard(
-                lyrics = displayLyrics,
-                originalLyrics = music.lyrics,
-                lyricsType = music.lyricsType,
-                isLoading = isLoadingLyrics,
-                platformService = platformService,
-                onUseLyrics = { mode -> onUseLyrics(displayLyrics, mode) },
-                isLandscape = true
-            )
-        }
+        )
     }
 }
 
 /**
- * 歌曲信息卡片
- * 完全参考网络搜索详情页的样式
+ * 歌曲信息卡片 - 参考网络搜索详情页样式
  */
 @Composable
-private fun MusicInfoCard(
+private fun SearchResultMusicInfoCard(
     music: Music,
     formattedDuration: String,
-    isLandscape: Boolean = false
+    platformService: PlatformService,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(UiConstants.CornerRadius.XLarge),
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Medium)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(if (isLandscape) UiConstants.Padding.Large else UiConstants.Padding.XLarge),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            // 专辑封面 - 接近卡片宽度
+            // 专辑封面 - 带阴影效果
             Card(
-                shape = RoundedCornerShape(UiConstants.CornerRadius.Large),
-                elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.High),
-                modifier = Modifier.fillMaxWidth(if (isLandscape) 0.5f else 0.7f)
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier.fillMaxWidth(0.85f)
             ) {
                 if (music.imageUrl.isNotEmpty() && music.imageUrl != "default") {
                     AsyncImage(
@@ -359,82 +358,80 @@ private fun MusicInfoCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1f)
-                            .padding(if (isLandscape) 32.dp else 48.dp),
+                            .padding(48.dp),
                         contentScale = ContentScale.Fit
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(if (isLandscape) UiConstants.Spacing.Large else UiConstants.Spacing.XLarge))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // 歌曲标题
             Text(
                 text = music.title,
-                fontSize = if (isLandscape) UiConstants.FontSize.Large else UiConstants.FontSize.XLarge,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(UiConstants.Spacing.XS))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // 歌手
             Text(
                 text = music.artist,
-                fontSize = if (isLandscape) UiConstants.FontSize.Normal else UiConstants.FontSize.Medium,
+                fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(UiConstants.Spacing.XS))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // 专辑名
             Text(
                 text = music.album,
-                fontSize = UiConstants.FontSize.Normal,
+                fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(UiConstants.Spacing.Medium))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 信息标签行：时长、平台、歌词类型
             Row(
-                horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 InfoChip(text = formattedDuration)
-                InfoChip(text = getPlatformDisplayName(music.platform))
-                InfoChip(text = getLyricsTypeDisplay(music.lyricsType))
+                InfoChip(text = PlatformUtils.getDisplayName(music.platform))
+                InfoChip(text = LyricsUtils.getTypeDisplay(music.lyricsType))
             }
         }
     }
 }
 
 /**
- * 歌词卡片
- * 完全参考网络搜索详情页的样式，包含使用此歌词按钮
+ * 歌词卡片 - 参考网络搜索详情页样式
  */
 @Composable
-private fun LyricsCard(
+private fun SearchResultLyricsCard(
     lyrics: String,
     originalLyrics: String,
-    lyricsType: String,
     isLoading: Boolean,
-    platformService: PlatformService,
     onUseLyrics: (LyricsWriteMode) -> Unit,
-    isLandscape: Boolean = false
+    platformService: PlatformService,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(UiConstants.CornerRadius.XLarge),
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = UiConstants.Elevation.Medium)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(if (isLandscape) UiConstants.Padding.Large else UiConstants.Padding.Medium)
+            modifier = Modifier.padding(20.dp)
         ) {
             // 标题栏
             Row(
@@ -444,121 +441,132 @@ private fun LyricsCard(
             ) {
                 Text(
                     text = "歌词",
-                    fontSize = if (isLandscape) UiConstants.FontSize.Large else UiConstants.FontSize.Medium,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // 调试日志
-                android.util.Log.d("LyricsCard", "isLoading: $isLoading, originalLyrics.isNotBlank: ${originalLyrics.isNotBlank()}, originalLyrics.length: ${originalLyrics.length}")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // 加载中显示进度指示器
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .height(24.dp)
+                                .width(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
 
-                if (!isLoading && originalLyrics.isNotBlank()) {
-                    // 使用下拉菜单让用户选择保存方式
-                    var showMenu by remember { mutableStateOf(false) }
-                    Box {
+                    // 使用此歌词按钮
+                    if (!isLoading && originalLyrics.isNotBlank()) {
+                        UseLyricsButton(onUseLyrics = onUseLyrics)
+                    }
+
+                    // 复制歌词按钮
+                    if (!isLoading && lyrics.isNotBlank() && !lyrics.startsWith("暂无歌词")) {
                         Button(
                             onClick = {
-                                android.util.Log.d("LyricsCard", "点击使用此歌词按钮")
-                                showMenu = true
+                                platformService.copyToClipboard("歌词", lyrics)
+                                platformService.showToast("歌词已复制")
                             },
-                            shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
+                            shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text("使用此歌词")
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("写入到音频文件 (ID3标签)") },
-                                onClick = {
-                                    android.util.Log.d("LyricsCard", "选择：写入到音频文件")
-                                    onUseLyrics(LyricsWriteMode.EMBEDDED)
-                                    showMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("写入到歌词文件 (.lrc)") },
-                                onClick = {
-                                    android.util.Log.d("LyricsCard", "选择：写入到歌词文件")
-                                    onUseLyrics(LyricsWriteMode.SEPARATE_FILE)
-                                    showMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("同时写入两者") },
-                                onClick = {
-                                    android.util.Log.d("LyricsCard", "选择：同时写入两者")
-                                    onUseLyrics(LyricsWriteMode.BOTH)
-                                    showMenu = false
-                                }
-                            )
+                            Text("复制")
                         }
                     }
-                } else if (!isLoading) {
-                    // 歌词为空时显示提示
-                    Text(
-                        text = "暂无歌词",
-                        fontSize = UiConstants.FontSize.Normal,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(UiConstants.Spacing.Medium))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // 歌词内容
+            // 歌词内容区域 - 使用卡片包裹
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(if (isLandscape) UiConstants.LyricsHeight.Max else UiConstants.LyricsHeight.Default),
-                shape = RoundedCornerShape(UiConstants.CornerRadius.Medium),
+                    .weight(1f),
+                shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 )
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
                 ) {
-                    when {
-                        isLoading -> {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.primary
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    } else {
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = lyrics,
+                            onValueChange = { },
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontSize = 14.sp,
+                                lineHeight = 24.sp,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                        }
-                        originalLyrics.isBlank() -> {
-                            Text(
-                                text = "暂无歌词",
-                                fontSize = UiConstants.FontSize.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        else -> {
-                            BasicTextField(
-                                value = lyrics,
-                                onValueChange = { },
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(UiConstants.Padding.Large),
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                    lineHeight = 24.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                ),
-                                readOnly = true,
-                                decorationBox = { innerTextField ->
-                                    Box(modifier = Modifier.fillMaxSize()) {
-                                        innerTextField()
-                                    }
-                                }
-                            )
-                        }
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * 使用此歌词按钮
+ */
+@Composable
+private fun UseLyricsButton(
+    onUseLyrics: (LyricsWriteMode) -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Box {
+        Button(
+            onClick = { showMenu = true },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text("使用此歌词")
+        }
+
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("写入到音频文件 (ID3标签)") },
+                onClick = {
+                    onUseLyrics(LyricsWriteMode.EMBEDDED)
+                    showMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("写入到歌词文件 (.lrc)") },
+                onClick = {
+                    onUseLyrics(LyricsWriteMode.SEPARATE_FILE)
+                    showMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("同时写入两者") },
+                onClick = {
+                    onUseLyrics(LyricsWriteMode.BOTH)
+                    showMenu = false
+                }
+            )
         }
     }
 }

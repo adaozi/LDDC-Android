@@ -32,7 +32,10 @@ object KrcDecoder {
             // Base64 解码
             val encryptedBytes = Base64.decode(encryptedContent, Base64.NO_WRAP)
             Log.d(TAG, "Base64 decoded, byte array size: ${encryptedBytes.size}")
-            Log.d(TAG, "First 20 bytes: ${encryptedBytes.take(20).joinToString(" ") { "%02x".format(it) }}")
+            Log.d(
+                TAG,
+                "First 20 bytes: ${encryptedBytes.take(20).joinToString(" ") { "%02x".format(it) }}"
+            )
 
             // 跳过前 4 个字节
             if (encryptedBytes.size < 5) {
@@ -44,7 +47,8 @@ object KrcDecoder {
             // XOR 解密
             val decryptedData = ByteArray(dataToDecrypt.size)
             for (i in dataToDecrypt.indices) {
-                decryptedData[i] = (dataToDecrypt[i].toInt() xor KRC_KEY[i % KRC_KEY.size].toInt()).toByte()
+                decryptedData[i] =
+                    (dataToDecrypt[i].toInt() xor KRC_KEY[i % KRC_KEY.size].toInt()).toByte()
             }
             Log.d(TAG, "XOR decrypted, size: ${decryptedData.size}")
 

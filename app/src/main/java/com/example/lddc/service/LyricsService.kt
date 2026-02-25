@@ -1,13 +1,20 @@
 package com.example.lddc.service
 
 import android.content.Context
-import com.example.lddc.model.*
-import com.example.lddc.model.LyricsFormat  // 显式导入 LyricsFormat
+import com.example.lddc.model.Lyrics
+import com.example.lddc.model.LyricsFormat
 import com.example.lddc.service.converter.assConverter
 import com.example.lddc.service.converter.lrcConverter
 import com.example.lddc.service.converter.srtConverter
 import com.example.lddc.service.logger.Logger
-import com.example.lddc.service.parser.*
+import com.example.lddc.service.parser.MultiLyricsData
+import com.example.lddc.service.parser.createLyricsData
+import com.example.lddc.service.parser.createMultiLyricsData
+import com.example.lddc.service.parser.krc2mdata
+import com.example.lddc.service.parser.lrc2data
+import com.example.lddc.service.parser.plaintext2data
+import com.example.lddc.service.parser.qrc2data
+import com.example.lddc.service.parser.yrc2data
 
 /**
  * 增强版歌词服务
@@ -46,6 +53,7 @@ class LyricsService(context: Context) {
                     lastRefLineTimeSty = options.lastRefLineTimeSty
                 )
             }
+
             LyricsOutputFormat.ASS -> {
                 assConverter(
                     title = lyrics.title,
@@ -56,6 +64,7 @@ class LyricsService(context: Context) {
                     version = options.version
                 )
             }
+
             LyricsOutputFormat.SRT -> {
                 srtConverter(
                     lyricsDict = lyricsData,
@@ -88,9 +97,10 @@ class LyricsService(context: Context) {
                     lyricsData["orig"] = parsedData
                     logger.info("QRC parsed: ${parsedData.size} lines")
                 }
+
                 Regex("""\[\d+,\d+]""").containsMatchIn(lyrics.orig) &&
-                    Regex("""<\d+,\d+,\d+>""").containsMatchIn(lyrics.orig) &&
-                    !lyrics.orig.contains("[00:") -> {
+                        Regex("""<\d+,\d+,\d+>""").containsMatchIn(lyrics.orig) &&
+                        !lyrics.orig.contains("[00:") -> {
                     // KRC 格式: [毫秒,持续时间]<相对开始,持续时间,0>内容
                     logger.info("Detected KRC format")
                     val (parsedTags, parsedData) = krc2mdata(lyrics.orig)
@@ -98,15 +108,17 @@ class LyricsService(context: Context) {
                     lyricsData.putAll(parsedData)
                     logger.info("KRC parsed: ${lyricsData["orig"]?.size ?: 0} lines")
                 }
+
                 Regex("""\[\d+,\d+]""").containsMatchIn(lyrics.orig) &&
-                    Regex("""\(\d+,\d+,\d+\)""").containsMatchIn(lyrics.orig) -> {
+                        Regex("""\(\d+,\d+,\d+\)""").containsMatchIn(lyrics.orig) -> {
                     // YRC 格式: [毫秒,持续时间](相对开始,持续时间,0)内容
                     logger.info("Detected YRC format")
                     lyricsData["orig"] = yrc2data(lyrics.orig)
                     logger.info("YRC parsed: ${lyricsData["orig"]?.size ?: 0} lines")
                 }
+
                 lyrics.orig.contains("[00:") ||
-                    (lyrics.orig.contains("[0") && lyrics.orig.contains("]")) -> {
+                        (lyrics.orig.contains("[0") && lyrics.orig.contains("]")) -> {
                     // LRC 格式: [mm:ss.xx] 或 [mm:ss.xxx]
                     logger.info("Detected LRC format")
                     val (parsedTags, parsedData) = lrc2data(lyrics.orig, lyrics.source)
@@ -114,6 +126,7 @@ class LyricsService(context: Context) {
                     lyricsData["orig"] = parsedData.firstOrNull() ?: createLyricsData()
                     logger.info("LRC parsed: ${lyricsData["orig"]?.size ?: 0} lines")
                 }
+
                 else -> {
                     // 纯文本
                     logger.info("Detected plain text format")

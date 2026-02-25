@@ -46,18 +46,25 @@ class PlatformService(private val context: Context) {
         return try {
             // 这里需要根据实际的图片URL或资源来保存图片
             // 目前先使用默认图片作为示例
-            val bitmap = (context.getDrawable(android.R.drawable.ic_media_play) as BitmapDrawable).bitmap
+            val bitmap =
+                (context.getDrawable(android.R.drawable.ic_media_play) as BitmapDrawable).bitmap
 
             // 保存图片到相册
             val contentValues = android.content.ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, "${imageName}.png")
                 put(MediaStore.Images.Media.MIME_TYPE, "image/png")
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LDDC")
+                    put(
+                        MediaStore.Images.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + "/LDDC"
+                    )
                 }
             }
 
-            val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            val uri = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
             uri?.let {
                 val outputStream = context.contentResolver.openOutputStream(it)
                 outputStream?.use { stream ->
@@ -102,14 +109,23 @@ class PlatformService(private val context: Context) {
     private fun saveBitmapToGallery(bitmap: Bitmap, imageName: String): Boolean {
         return try {
             val contentValues = android.content.ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, "${imageName}_${System.currentTimeMillis()}.jpg")
+                put(
+                    MediaStore.Images.Media.DISPLAY_NAME,
+                    "${imageName}_${System.currentTimeMillis()}.jpg"
+                )
                 put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LDDC")
+                    put(
+                        MediaStore.Images.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + "/LDDC"
+                    )
                 }
             }
 
-            val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            val uri = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
             uri?.let {
                 context.contentResolver.openOutputStream(it)?.use { stream ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)

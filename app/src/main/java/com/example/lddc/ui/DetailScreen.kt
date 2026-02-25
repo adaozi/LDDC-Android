@@ -64,7 +64,8 @@ fun DetailScreen(
         val lyricsService = remember { LyricsService(context) }
 
         val configuration = LocalConfiguration.current
-        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        val isLandscape =
+            configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
         val displayLyrics = remember(music.lyrics, music.lyricsType) {
             if (music.lyrics.isNotEmpty()) {
@@ -91,7 +92,11 @@ fun DetailScreen(
                         options = options
                     )
                 } catch (e: Exception) {
-                    android.util.Log.e("DetailScreen", "Failed to convert lyrics for display: ${e.message}", e)
+                    android.util.Log.e(
+                        "DetailScreen",
+                        "Failed to convert lyrics for display: ${e.message}",
+                        e
+                    )
                     music.lyrics
                 }
             } else {
@@ -161,7 +166,8 @@ fun DetailScreen(
                     confirmButton = {
                         androidx.compose.material3.TextButton(
                             onClick = {
-                                val success = platformService.saveImageToGallery("${music.title}_${music.artist}")
+                                val success =
+                                    platformService.saveImageToGallery("${music.title}_${music.artist}")
                                 showSaveDialog.value = false
                                 if (success) {
                                     platformService.showToast("图片已保存到相册")

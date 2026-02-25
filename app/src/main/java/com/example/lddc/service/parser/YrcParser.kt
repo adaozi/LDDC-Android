@@ -17,7 +17,8 @@ package com.example.lddc.service.parser
 private val LINE_SPLIT_PATTERN = Regex("^\\[(\\d+),(\\d+)](.*)$")
 
 /** 逐字时间戳匹配模式：(相对开始时间,持续时间,0)单词 */
-private val WORD_SPLIT_PATTERN = Regex("(?:\\[\\d+,\\d+])?\\((?<start>\\d+),(?<duration>\\d+),\\d+\\)(?<content>(?:.(?!\\d+,\\d+,\\d+\\)))*)")
+private val WORD_SPLIT_PATTERN =
+    Regex("(?:\\[\\d+,\\d+])?\\((?<start>\\d+),(?<duration>\\d+),\\d+\\)(?<content>(?:.(?!\\d+,\\d+,\\d+\\)))*)")
 
 /**
  * 将YRC文本解析为结构化歌词数据
@@ -58,7 +59,13 @@ fun yrc2data(yrc: String): LyricsData {
 
         if (words.isEmpty()) {
             // 无逐字信息，整行作为一个单词
-            lyricsData.add(LyricsLine(lineStart, lineEnd, listOf(LyricsWord(lineStart, lineEnd, lineContent))))
+            lyricsData.add(
+                LyricsLine(
+                    lineStart,
+                    lineEnd,
+                    listOf(LyricsWord(lineStart, lineEnd, lineContent))
+                )
+            )
         } else {
             lyricsData.add(LyricsLine(lineStart, lineEnd, words))
         }

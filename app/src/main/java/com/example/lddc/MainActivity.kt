@@ -24,15 +24,14 @@ import com.example.lddc.service.PlatformService
 import com.example.lddc.ui.DetailScreen
 import com.example.lddc.ui.LocalMusicDetailScreen
 import com.example.lddc.ui.LocalMusicListScreen
-import com.example.lddc.ui.LocalMusicSearchScreen
 import com.example.lddc.ui.LocalMusicSearchDetailScreen
+import com.example.lddc.ui.LocalMusicSearchScreen
 import com.example.lddc.ui.ResultsScreen
 import com.example.lddc.ui.SearchScreen
 import com.example.lddc.ui.theme.LDDCTheme
 import com.example.lddc.viewmodel.LocalMatchViewModel
 import com.example.lddc.viewmodel.MusicViewModel
 import org.jaudiotagger.tag.TagOptionSingleton
-import java.nio.charset.Charset
 
 /**
  * 主 Activity
@@ -190,10 +189,19 @@ fun MusicApp(
                 viewModel = localMatchViewModel,
                 onBack = { navController.popBackStack() },
                 onUseLyrics = { lyrics, mode ->
-                    android.util.Log.d("MainActivity", "点击使用此歌词，歌词长度: ${lyrics.length}, 模式: $mode")
+                    android.util.Log.d(
+                        "MainActivity",
+                        "点击使用此歌词，歌词长度: ${lyrics.length}, 模式: $mode"
+                    )
                     // 写入歌词到本地音乐（使用转换后的歌词和选择的保存模式）
-                    localMatchViewModel.writeLyricsToLocalMusic(lyrics, mode) { success, errorMessage ->
-                        android.util.Log.d("MainActivity", "歌词写入结果: $success, 错误: $errorMessage")
+                    localMatchViewModel.writeLyricsToLocalMusic(
+                        lyrics,
+                        mode
+                    ) { success, errorMessage ->
+                        android.util.Log.d(
+                            "MainActivity",
+                            "歌词写入结果: $success, 错误: $errorMessage"
+                        )
                         if (success) {
                             // 显示成功提示
                             val modeText = when (mode) {
@@ -209,16 +217,23 @@ fun MusicApp(
                             // 显示失败提示
                             if (errorMessage?.contains("权限") == true ||
                                 errorMessage?.contains("Permission") == true ||
-                                errorMessage?.contains("NoWritePermissionsException") == true) {
+                                errorMessage?.contains("NoWritePermissionsException") == true
+                            ) {
                                 platformService.showToast("需要「管理所有文件」权限才能保存歌词")
                                 // 引导用户去系统设置开启权限（Android 11+）
-                                val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                                    android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                                } else {
-                                    android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = android.net.Uri.fromParts("package", context.packageName, null)
+                                val intent =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                                        android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                                    } else {
+                                        android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                            .apply {
+                                                data = android.net.Uri.fromParts(
+                                                    "package",
+                                                    context.packageName,
+                                                    null
+                                                )
+                                            }
                                     }
-                                }
                                 context.startActivity(intent)
                             } else {
                                 platformService.showToast("歌词保存失败: ${errorMessage ?: "未知错误"}")

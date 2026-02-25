@@ -22,10 +22,12 @@ private val TAG_SPLIT_PATTERN = Regex("^\\[(\\w+):([^]]*)]$")
 private val LINE_SPLIT_PATTERN = Regex("^\\[(\\d+):(\\d+)\\.(\\d+)](.*)$")
 
 /** 增强型逐字匹配模式：<mm:ss.xx>单词<mm:ss.xx> */
-private val ENHANCED_WORD_SPLIT_PATTERN = Regex("<(\\d+):(\\d+)\\.(\\d+)>((?:(?!<\\d+:\\d+\\.\\d+>).)*)(?:<(\\d+):(\\d+)\\.(\\d+)>)?")
+private val ENHANCED_WORD_SPLIT_PATTERN =
+    Regex("<(\\d+):(\\d+)\\.(\\d+)>((?:(?!<\\d+:\\d+\\.\\d+>).)*)(?:<(\\d+):(\\d+)\\.(\\d+)>)?")
 
 /** 单词分割模式 */
-private val WORD_SPLIT_PATTERN = Regex("((?:(?!\\[\\d+:\\d+\\.\\d+]).)*)(?:\\[(\\d+):(\\d+)\\.(\\d+)])?")
+private val WORD_SPLIT_PATTERN =
+    Regex("((?:(?!\\[\\d+:\\d+\\.\\d+]).)*)(?:\\[(\\d+):(\\d+)\\.(\\d+)])?")
 
 /** 多时间戳行匹配模式（网易云特殊格式） */
 private val MULTI_LINE_SPLIT_PATTERN = Regex("^((?:\\[\\d+:\\d+\\.\\d+]){2,})(.*)$")
@@ -98,7 +100,11 @@ fun lrc2data(lrc: String, source: Source? = null): Pair<Map<String, String>, Lis
                 val timestamps = multiMatch.groupValues[1]
                 val lineContent = multiMatch.groupValues[2]
                 TIMESTAMPS_PATTERN.findAll(timestamps).forEach { tsMatch ->
-                    val start = time2ms(tsMatch.groupValues[1], tsMatch.groupValues[2], tsMatch.groupValues[3])
+                    val start = time2ms(
+                        tsMatch.groupValues[1],
+                        tsMatch.groupValues[2],
+                        tsMatch.groupValues[3]
+                    )
                     addLine(LyricsLine(start, null, listOf(LyricsWord(start, null, lineContent))))
                 }
                 return@forEach
@@ -230,6 +236,7 @@ fun lyricsLine2str(
             text.append(words.joinToString("") { it.text })
             return text.toString()
         }
+
         LyricsFormat.VERBATIMLRC -> {
             // 逐字LRC：使用 [ ] 包裹时间戳
             val symbols = Pair("[", "]")
@@ -259,6 +266,7 @@ fun lyricsLine2str(
                 text.append("${symbols.first}${msConverter(actualLineEndTime)}${symbols.second}")
             }
         }
+
         LyricsFormat.ENHANCEDLRC -> {
             // 增强型LRC：使用 < > 包裹时间戳
             val symbols = Pair("<", ">")

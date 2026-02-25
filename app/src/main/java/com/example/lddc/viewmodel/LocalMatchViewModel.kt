@@ -14,7 +14,6 @@ import com.example.lddc.domain.usecase.SearchSongsUseCase
 import com.example.lddc.model.LocalMusicInfo
 import com.example.lddc.model.LocalMusicMatchResult
 import com.example.lddc.model.LocalMusicMatchStatus
-import com.example.lddc.model.Lyrics
 import com.example.lddc.model.LyricsWriteMode
 import com.example.lddc.model.MatchProgress
 import com.example.lddc.model.Music
@@ -50,10 +49,13 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     // UseCase层依赖（通过DI获取）
-    private val matchLocalMusicUseCase: MatchLocalMusicUseCase = AppModule.provideMatchLocalMusicUseCase(application)
-    private val searchSongsUseCase: SearchSongsUseCase = AppModule.provideSearchSongsUseCase(application)
+    private val matchLocalMusicUseCase: MatchLocalMusicUseCase =
+        AppModule.provideMatchLocalMusicUseCase(application)
+    private val searchSongsUseCase: SearchSongsUseCase =
+        AppModule.provideSearchSongsUseCase(application)
     private val getLyricsUseCase: GetLyricsUseCase = AppModule.provideGetLyricsUseCase(application)
-    private val filterAndSortMusicUseCase: FilterAndSortMusicUseCase = AppModule.provideFilterAndSortMusicUseCase()
+    private val filterAndSortMusicUseCase: FilterAndSortMusicUseCase =
+        AppModule.provideFilterAndSortMusicUseCase()
     private val userPreferences: UserPreferences = UserPreferences(application)
 
     // 直接使用 LyricsApiServiceImpl 获取歌词（保留原始 SongInfo）
@@ -272,49 +274,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
-     * 取消扫描
-     */
-    fun cancelScan() {
-        scanJob?.cancel()
-    }
-
-    /**
-     * 使用并行扫描扫描指定目录
-     * 根据设备性能动态调整线程数
-     *
-     * @param directoryPath 目录路径
-     * @param includeSubDirs 是否包含子目录
-     */
-    fun startParallelScan(directoryPath: String, includeSubDirs: Boolean = true) {
-        if (scanJob?.isActive == true) return
-
-        scanJob = viewModelScope.launch {
-            try {
-                _scanState.value = ScanState.Scanning
-                _localMusicList.value = emptyList()
-                _matchResults.value = emptyList()
-
-                val musicList = mutableListOf<LocalMusicInfo>()
-
-                matchLocalMusicUseCase.scanDirectoryParallel(directoryPath, includeSubDirs).collect { (music, progress) ->
-                    musicList.add(music)
-                    _localMusicList.value = musicList.toList()
-                    _scanProgress.value = progress
-                }
-
-                _scanState.value = ScanState.Completed(musicList.size)
-
-            } catch (e: CancellationException) {
-                _scanState.value = ScanState.Cancelled
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "并行扫描失败", e)
-                _scanState.value = ScanState.Error(e.message ?: "扫描失败")
-            }
-        }
-    }
-
-    /**
      * 显示保存方式选择对话框
      *
      * @param musicList 要匹配的音乐列表
@@ -331,15 +290,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     fun hideSaveModeDialog() {
         _showSaveModeDialog.value = false
         _pendingMatchList.value = null
-    }
-
-    /**
-     * 设置默认保存方式
-     *
-     * @param mode 保存方式
-     */
-    fun setDefaultSaveMode(mode: LyricsWriteMode) {
-        _defaultSaveMode.value = mode
     }
 
     /**
@@ -362,7 +312,10 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
 
         // 按标题排序（拼音/字母顺序，符号开头的排后面）
         val sortedList = SortUtils.sortByTitle(targetList)
-        Log.d(TAG, "开始匹配 ${sortedList.size} 首音乐（已排序）, 保存歌词: $saveLyrics, 模式: $writeMode")
+        Log.d(
+            TAG,
+            "开始匹配 ${sortedList.size} 首音乐（已排序）, 保存歌词: $saveLyrics, 模式: $writeMode"
+        )
 
         // 清空之前的结果
         _matchResults.value = emptyList()
@@ -379,6 +332,7 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
                                 _matchProgress.value = result.progress
                                 _matchResults.value = result.results
                             }
+
                             is MatchProgressResult.Completed -> {
                                 _matchResults.value = result.results
                                 _matchState.value = MatchState.Completed(result.successCount)
@@ -431,75 +385,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             val lyrics = matchLocalMusicUseCase.readLocalLyrics(music.filePath)
             _localLyrics.value = lyrics
-        }
-    }
-
-    /**
-     * 清除选中的本地音乐
-     */
-    fun clearSelectedLocalMusic() {
-        _selectedLocalMusic.value = null
-        _localLyrics.value = null
-        songInfoMap = emptyMap()
-    }
-
-    /**
-     * 搜索歌曲
-     */
-    fun searchSongs(keyword: String, source: Source = Source.QM) {
-        if (searchJob?.isActive == true) searchJob?.cancel()
-        if (keyword.isBlank()) return
-
-        _searchKeyword.value = keyword
-        searchJob = viewModelScope.launch {
-            try {
-                _isSearching.value = true
-
-                // 直接使用 LyricsApiServiceImpl 进行搜索，保留原始 SongInfo
-                val results = lyricsApiService.multiSearch(
-                    keyword = keyword,
-                    searchType = com.example.lddc.model.SearchType.SONG,
-                    sources = listOf(source),
-                    page = 1
-                )
-
-                // 保存原始 SongInfo 用于后续获取歌词
-                val songInfoMapBuilder = mutableMapOf<String, SongInfo>()
-
-                // 将搜索结果转换为 Music 对象
-                val musicResults = results.map { item ->
-                    songInfoMapBuilder[item.id] = item
-
-                    // 时长从毫秒转换为秒
-                    val durationInSeconds = item.duration / 1000
-
-                    Music(
-                        id = item.id,
-                        title = item.title,
-                        artist = item.artist.name,
-                        duration = durationInSeconds.toString(),
-                        platform = when (item.source) {
-                            Source.QM -> "QQ音乐"
-                            Source.NE -> "网易云音乐"
-                            Source.KG -> "酷狗音乐"
-                        },
-                        album = item.album,
-                        imageUrl = item.imageUrl,
-                        description = "",
-                        lyrics = "",
-                        lyricsType = "未知"
-                    )
-                }
-
-                songInfoMap = songInfoMapBuilder
-                _searchResults.value = musicResults
-
-            } catch (e: Exception) {
-                Log.e(TAG, "搜索失败", e)
-                _searchResults.value = emptyList()
-            } finally {
-                _isSearching.value = false
-            }
         }
     }
 
@@ -557,7 +442,8 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
                 songInfoMap = songInfoMapBuilder
 
                 // 根据本地音乐信息筛选和排序
-                _searchResults.value = filterAndSortMusicUseCase.filterAndSortByLocalMusic(musicResults, localMusic)
+                _searchResults.value =
+                    filterAndSortMusicUseCase.filterAndSortByLocalMusic(musicResults, localMusic)
 
                 // 判断是否还有更多数据
                 _hasMoreData.value = musicResults.size >= PAGE_SIZE
@@ -715,70 +601,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
-     * 获取歌曲歌词
-     */
-    suspend fun getLyrics(music: Music): Result<Lyrics> {
-        val songInfo = songInfoMap[music.id]
-        return if (songInfo != null) {
-            try {
-                val lyrics = lyricsApiService.getLyrics(songInfo)
-                Result.success(lyrics)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        } else {
-            Result.failure(IllegalStateException("未找到对应的 SongInfo"))
-        }
-    }
-
-    /**
-     * 将选中的搜索结果歌词写入当前选中的本地音乐
-     */
-    fun writeSelectedLyricsToLocalMusic(onComplete: (Boolean) -> Unit = {}) {
-        viewModelScope.launch {
-            try {
-                val localMusic = _selectedLocalMusic.value
-                val searchResult = _selectedSearchResult.value
-
-                if (localMusic == null || searchResult == null || searchResult.lyrics.isBlank()) {
-                    Log.e(TAG, "无法写入歌词：本地音乐或搜索结果为空")
-                    onComplete(false)
-                    return@launch
-                }
-
-                // 写入歌词到本地音乐文件
-                val result = matchLocalMusicUseCase.writeLyrics(
-                    localMusic.filePath,
-                    searchResult.lyrics,
-                    LyricsWriteMode.EMBEDDED
-                )
-
-                if (result.success) {
-                    // 更新本地歌词状态
-                    _localLyrics.value = searchResult.lyrics
-
-                    // 更新匹配结果状态
-                    val updatedResults = _matchResults.value.map { r ->
-                        if (r.localMusic.id == localMusic.id) {
-                            r.copy(status = LocalMusicMatchStatus.WRITTEN)
-                        } else r
-                    }
-                    _matchResults.value = updatedResults
-
-                    Log.d(TAG, "歌词写入成功: ${localMusic.filePath}")
-                    onComplete(true)
-                } else {
-                    Log.e(TAG, "歌词写入失败: ${result.errorMessage}")
-                    onComplete(false)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "写入歌词失败", e)
-                onComplete(false)
-            }
-        }
-    }
-
-    /**
      * 将指定的歌词写入当前选中的本地音乐
      */
     fun writeLyricsToLocalMusic(
@@ -825,17 +647,6 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
                 Log.e(TAG, "写入歌词失败", e)
                 onComplete(false, e.message)
             }
-        }
-    }
-
-    /**
-     * 刷新本地歌词
-     */
-    fun refreshLocalLyrics() {
-        val music = _selectedLocalMusic.value ?: return
-        viewModelScope.launch {
-            val lyrics = matchLocalMusicUseCase.readLocalLyrics(music.filePath)
-            _localLyrics.value = lyrics
         }
     }
 

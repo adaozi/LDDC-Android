@@ -23,7 +23,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -31,8 +30,11 @@ import kotlinx.coroutines.sync.withLock
  * 匹配进度结果密封类
  */
 sealed class MatchProgressResult {
-    data class InProgress(val progress: MatchProgress, val results: List<LocalMusicMatchResult>) : MatchProgressResult()
-    data class Completed(val results: List<LocalMusicMatchResult>, val successCount: Int) : MatchProgressResult()
+    data class InProgress(val progress: MatchProgress, val results: List<LocalMusicMatchResult>) :
+        MatchProgressResult()
+
+    data class Completed(val results: List<LocalMusicMatchResult>, val successCount: Int) :
+        MatchProgressResult()
 }
 
 /**
@@ -49,15 +51,6 @@ class MatchLocalMusicUseCase(
     companion object {
         private const val TAG = "MatchLocalMusicUseCase"
         private const val MIN_CONFIDENCE = 0.6f
-    }
-
-    /**
-     * 扫描本地音乐
-     *
-     * @return 扫描进度和音乐信息流
-     */
-    fun scanLocalMusic(): Flow<Pair<LocalMusicInfo, ScanProgress>> {
-        return localMusicRepository.scanAllMusic()
     }
 
     /**
@@ -85,7 +78,11 @@ class MatchLocalMusicUseCase(
         includeSubDirs: Boolean = true,
         progressUpdateInterval: Int = 5
     ): Flow<Pair<LocalMusicInfo, ScanProgress>> {
-        return localMusicRepository.scanDirectoryParallel(directoryPath, includeSubDirs, progressUpdateInterval)
+        return localMusicRepository.scanDirectoryParallel(
+            directoryPath,
+            includeSubDirs,
+            progressUpdateInterval
+        )
     }
 
     /**
@@ -177,7 +174,8 @@ class MatchLocalMusicUseCase(
                     )
 
                     // 写入转换后的歌词到文件
-                    val result = localMusicRepository.writeLyrics(filePath, convertedLyrics, writeMode)
+                    val result =
+                        localMusicRepository.writeLyrics(filePath, convertedLyrics, writeMode)
                     result.success
                 },
                 onFailure = {
@@ -218,7 +216,10 @@ class MatchLocalMusicUseCase(
             PerformanceUtils.PerformanceLevel.LOW -> 3
         }
 
-        Log.d(TAG, "开始批量匹配: ${musicList.size} 首音乐, 并发数: $threadCount, 保存歌词: $saveLyrics")
+        Log.d(
+            TAG,
+            "开始批量匹配: ${musicList.size} 首音乐, 并发数: $threadCount, 保存歌词: $saveLyrics"
+        )
 
         val results = mutableListOf<LocalMusicMatchResult>()
         val mutex = Mutex()
@@ -287,55 +288,6 @@ class MatchLocalMusicUseCase(
         }
 
         send(MatchProgressResult.Completed(results.toList(), successCount))
-    }
-
-    /**
-     * 批量匹配本地音乐（单线程顺序处理，兼容旧版本）
-     *
-     * @param musicList 本地音乐列表
-     * @return 匹配进度流
-     */
-    fun matchMultipleMusic(musicList: List<LocalMusicInfo>): Flow<MatchProgressResult> = flow {
-        val results = mutableListOf<LocalMusicMatchResult>()
-        var successCount = 0
-        var failedCount = 0
-
-        musicList.forEachIndexed { index, music ->
-            try {
-                val progress = MatchProgress(
-                    current = index + 1,
-                    total = musicList.size,
-                    currentMusic = music.title,
-                    successCount = successCount,
-                    failedCount = failedCount
-                )
-
-                val result = matchSingleMusic(music)
-                results.add(result)
-
-                if (result.status == LocalMusicMatchStatus.MATCHED) {
-                    successCount++
-                } else {
-                    failedCount++
-                }
-
-                emit(MatchProgressResult.InProgress(progress, results.toList()))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "匹配失败: ${music.title}", e)
-                failedCount++
-                results.add(
-                    LocalMusicMatchResult(
-                        localMusic = music,
-                        status = LocalMusicMatchStatus.ERROR,
-                        errorMessage = e.message
-                    )
-                )
-            }
-        }
-
-        emit(MatchProgressResult.Completed(results.toList(), successCount))
     }
 
     /**

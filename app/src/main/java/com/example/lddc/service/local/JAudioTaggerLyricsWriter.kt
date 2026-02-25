@@ -10,12 +10,12 @@ import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.Tag
 import org.jaudiotagger.tag.TagOptionSingleton
+import org.jaudiotagger.tag.asf.AsfTag
+import org.jaudiotagger.tag.flac.FlacTag
 import org.jaudiotagger.tag.id3.AbstractID3v2Tag
 import org.jaudiotagger.tag.id3.ID3v24Tag
 import org.jaudiotagger.tag.mp4.Mp4Tag
-import org.jaudiotagger.tag.asf.AsfTag
 import org.jaudiotagger.tag.vorbiscomment.VorbisCommentTag
-import org.jaudiotagger.tag.flac.FlacTag
 import org.jaudiotagger.tag.wav.WavTag
 import java.io.File
 
@@ -69,6 +69,7 @@ class JAudioTaggerLyricsWriter {
                     }
                 )
             }
+
             else -> writeEmbeddedLyrics(filePath, lyrics)
         }
     }
@@ -132,11 +133,13 @@ class JAudioTaggerLyricsWriter {
             Log.e(TAG, "写入歌词失败: $filePath", e)
             val errorMsg = when {
                 e.message?.contains("Permission denied") == true ||
-                e.message?.contains("NoWritePermissionsException") == true ||
-                e.javaClass.name.contains("NoWritePermissionsException") ->
+                        e.message?.contains("NoWritePermissionsException") == true ||
+                        e.javaClass.name.contains("NoWritePermissionsException") ->
                     "没有写入权限。Android 11+ 需要授予应用「管理所有文件」权限才能修改外部存储中的音频文件。"
+
                 e.message?.contains("Read-only") == true ->
                     "文件是只读的。请检查文件权限。"
+
                 else -> "写入失败: ${e.message}"
             }
             LyricsWriteResult(
@@ -163,7 +166,10 @@ class JAudioTaggerLyricsWriter {
             // 检查是否是外部存储中的文件
             val externalStorage = Environment.getExternalStorageDirectory()
             if (file.absolutePath.startsWith(externalStorage.absolutePath)) {
-                Log.w(TAG, "Android 11+ 无 MANAGE_EXTERNAL_STORAGE 权限，尝试直接写入: ${file.absolutePath}")
+                Log.w(
+                    TAG,
+                    "Android 11+ 无 MANAGE_EXTERNAL_STORAGE 权限，尝试直接写入: ${file.absolutePath}"
+                )
                 // 尝试直接写入，某些设备上可能可以工作
                 // 返回 true 让写入操作尝试
                 return true
@@ -329,58 +335,6 @@ class JAudioTaggerLyricsWriter {
     }
 
     /**
-     * 删除歌词
-     */
-    fun deleteLyrics(filePath: String): LyricsWriteResult {
-        return try {
-            val file = File(filePath)
-            if (!file.exists()) {
-                return LyricsWriteResult(
-                    success = false,
-                    errorMessage = "文件不存在: $filePath"
-                )
-            }
-
-            val audioFile = AudioFileIO.read(file)
-            val tag = audioFile.tag
-
-            if (tag == null) {
-                return LyricsWriteResult(
-                    success = true,
-                    errorMessage = null
-                )
-            }
-
-            // 删除歌词字段
-            try {
-                tag.deleteField(FieldKey.LYRICS)
-            } catch (e: Exception) {
-                // 某些标签可能不支持这些字段
-            }
-
-            // 保存文件
-            AudioFileIO.write(audioFile)
-
-            // 同时删除外部歌词文件
-            val lyricsFile = File(file.parent, "${file.nameWithoutExtension}.lrc")
-            if (lyricsFile.exists()) {
-                lyricsFile.delete()
-            }
-
-            LyricsWriteResult(
-                success = true,
-                embeddedSuccess = true
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "删除歌词失败: $filePath", e)
-            LyricsWriteResult(
-                success = false,
-                errorMessage = "删除失败: ${e.message}"
-            )
-        }
-    }
-
-    /**
      * 检查文件是否支持写入歌词
      */
     fun isSupported(filePath: String): Boolean {
@@ -396,43 +350,4 @@ class JAudioTaggerLyricsWriter {
         }
     }
 
-    /**
-     * 获取文件支持的歌词字段
-     */
-    fun getSupportedFields(filePath: String): List<String> {
-        return try {
-            val file = File(filePath)
-            if (!file.exists()) return emptyList()
-
-            val audioFile = AudioFileIO.read(file)
-            val tag = audioFile.tag ?: return emptyList()
-
-            val fields = mutableListOf<String>()
-
-            // 检查支持的字段
-            when (tag) {
-                is AbstractID3v2Tag -> {
-                    fields.add("USLT (非同步歌词)")
-                    fields.add("LYRICS")
-                }
-                is VorbisCommentTag -> {
-                    fields.add("LYRICS")
-                }
-                is Mp4Tag -> {
-                    fields.add("LYRICS")
-                }
-                is AsfTag -> {
-                    fields.add("WM/LYRICS")
-                    fields.add("Lyrics")
-                }
-                else -> {
-                    fields.add("LYRICS")
-                }
-            }
-
-            fields
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
 }

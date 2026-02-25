@@ -326,7 +326,9 @@ object AudioMetadataReader {
         score -= garbledCount * 5
 
         // 5. 奖励可打印字符比例高的
-        val printableRatio = text.count { it.isLetterOrDigit() || it.isWhitespace() || it in ".,!?;:'\"()-[]{}" }.toFloat() / text.length
+        val printableRatio =
+            text.count { it.isLetterOrDigit() || it.isWhitespace() || it in ".,!?;:'\"()-[]{}" }
+                .toFloat() / text.length
         score += (printableRatio * 20).toInt()
 
         // 6. 奖励包含中文字符的（对于中文歌曲）
@@ -392,7 +394,8 @@ object AudioMetadataReader {
                     "TCON" -> genre = parseID3TextFrame(frameContent)
                     "USLT" -> lyrics = parseID3LyricsFrame(frameContent)
                     "TCOM" -> composer = parseID3TextFrame(frameContent)
-                    "TRCK" -> trackNumber = parseID3TextFrame(frameContent)?.substringBefore("/")?.toIntOrNull()
+                    "TRCK" -> trackNumber =
+                        parseID3TextFrame(frameContent)?.substringBefore("/")?.toIntOrNull()
                 }
 
                 if (frameId[0] == 0.toChar()) break
@@ -491,18 +494,22 @@ object AudioMetadataReader {
                 // ISO-8859-1，但可能是 GBK/GB2312
                 decodeWithCharsetDetection(data, Charsets.ISO_8859_1)
             }
+
             0x01 -> {
                 // UTF-16 with BOM
                 decodeUTF16WithBOM(data)
             }
+
             0x02 -> {
                 // UTF-16 BE without BOM
                 decodeWithCharsetDetection(data, Charsets.UTF_16BE)
             }
+
             0x03 -> {
                 // UTF-8
                 decodeWithCharsetDetection(data, Charsets.UTF_8)
             }
+
             else -> {
                 // 未知编码，尝试自动检测
                 autoDecode(data)
@@ -620,7 +627,8 @@ object AudioMetadataReader {
         if (nullCount > content.length * 0.1) return true
 
         // 5. 检查是否有大量乱码常见字符
-        val commonGarbled = content.count { it == '�' || it == '�' || it == '锟' || it == '斤' || it == '拷' }
+        val commonGarbled =
+            content.count { it == '�' || it == '�' || it == '锟' || it == '斤' || it == '拷' }
         return commonGarbled > 0
     }
 
@@ -694,7 +702,24 @@ object AudioMetadataReader {
             if (data.size < 16) return ExtendedMetadata()
 
             // ASF Header GUID: 30 26 B2 75 8E 66 CF 11 A6 D9 00 AA 00 62 CE 6C
-            val asfGuid = byteArrayOf(0x30, 0x26, 0xB2.toByte(), 0x75, 0x8E.toByte(), 0x66, 0xCF.toByte(), 0x11, 0xA6.toByte(), 0xD9.toByte(), 0x00, 0xAA.toByte(), 0x00, 0x62, 0xCE.toByte(), 0x6C.toByte())
+            val asfGuid = byteArrayOf(
+                0x30,
+                0x26,
+                0xB2.toByte(),
+                0x75,
+                0x8E.toByte(),
+                0x66,
+                0xCF.toByte(),
+                0x11,
+                0xA6.toByte(),
+                0xD9.toByte(),
+                0x00,
+                0xAA.toByte(),
+                0x00,
+                0x62,
+                0xCE.toByte(),
+                0x6C.toByte()
+            )
             if (!data.copyOfRange(0, 16).contentEquals(asfGuid)) {
                 return ExtendedMetadata()
             }
@@ -822,7 +847,8 @@ object AudioMetadataReader {
             val data = file.readBytes()
             // MPC 文件以 "MP+" 或 "MPCK" 开头
             if (data.size < 3 || (String(data, 0, 3, Charsets.ISO_8859_1) != "MP+" &&
-                        String(data, 0, 4, Charsets.ISO_8859_1) != "MPCK")) {
+                        String(data, 0, 4, Charsets.ISO_8859_1) != "MPCK")
+            ) {
                 return ExtendedMetadata()
             }
 
@@ -863,7 +889,8 @@ object AudioMetadataReader {
         for (i in data.size - 10 downTo 0) {
             if (data[i] == 'I'.code.toByte() &&
                 data[i + 1] == 'D'.code.toByte() &&
-                data[i + 2] == '3'.code.toByte()) {
+                data[i + 2] == '3'.code.toByte()
+            ) {
                 val id3Data = data.copyOfRange(i, data.size)
                 return parseID3Metadata(id3Data)
             }

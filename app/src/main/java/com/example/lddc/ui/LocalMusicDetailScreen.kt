@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -97,7 +98,8 @@ fun LocalMusicDetailScreen(
 
     val music = selectedMusic!!
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // 歌词内容：优先使用匹配结果，其次使用本地歌词，最后显示提示
     val lyricsContent = matchResult?.lyrics
@@ -175,11 +177,16 @@ fun LocalMusicDetailScreen(
                         if (selectedMusic != null) {
                             // 检查是否需要管理外部存储权限
                             if (PermissionManager.needsManageExternalStoragePermission() &&
-                                !PermissionManager.hasManageExternalStoragePermission(context)) {
+                                !PermissionManager.hasManageExternalStoragePermission(context)
+                            ) {
                                 // 显示权限引导
                                 showManageStorageDialog = true
                             } else {
-                                viewModel.writeLyrics(selectedMusic, editableLyrics, mode) { success, error ->
+                                viewModel.writeLyrics(
+                                    selectedMusic,
+                                    editableLyrics,
+                                    mode
+                                ) { success, error ->
                                     if (success) {
                                         platformService.showToast("歌词写入成功")
                                     } else {
@@ -204,11 +211,16 @@ fun LocalMusicDetailScreen(
                         if (selectedMusic != null) {
                             // 检查是否需要管理外部存储权限
                             if (PermissionManager.needsManageExternalStoragePermission() &&
-                                !PermissionManager.hasManageExternalStoragePermission(context)) {
+                                !PermissionManager.hasManageExternalStoragePermission(context)
+                            ) {
                                 // 显示权限引导
                                 showManageStorageDialog = true
                             } else {
-                                viewModel.writeLyrics(selectedMusic, editableLyrics, mode) { success, error ->
+                                viewModel.writeLyrics(
+                                    selectedMusic,
+                                    editableLyrics,
+                                    mode
+                                ) { success, error ->
                                     if (success) {
                                         platformService.showToast("歌词写入成功")
                                     } else {
@@ -253,7 +265,7 @@ private fun ManageStorageDialog(
         text = {
             Text(
                 "Android 11+ 需要授予\"所有文件访问权限\"才能修改音频文件中的歌词。\n\n" +
-                "请在设置中找到本应用，开启\"允许访问所有文件\"权限。"
+                        "请在设置中找到本应用，开启\"允许访问所有文件\"权限。"
             )
         },
         confirmButton = {
@@ -270,7 +282,7 @@ private fun ManageStorageDialog(
 }
 
 /**
- * 竖屏本地音乐详情
+ * 竖屏本地音乐详情 - 参考网络歌曲详情设计
  */
 @Composable
 private fun PortraitLocalMusicDetail(
@@ -313,7 +325,7 @@ private fun PortraitLocalMusicDetail(
 }
 
 /**
- * 横屏本地音乐详情
+ * 横屏本地音乐详情 - 参考网络歌曲详情设计
  */
 @Composable
 private fun LandscapeLocalMusicDetail(
@@ -329,7 +341,7 @@ private fun LandscapeLocalMusicDetail(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp)
+        horizontalArrangement = Arrangement.spacedBy(32.dp)
     ) {
         // 左侧：歌曲信息
         LocalMusicInfoCard(
@@ -337,7 +349,9 @@ private fun LandscapeLocalMusicDetail(
             matchResult = matchResult,
             formattedDuration = formattedDuration,
             platformService = platformService,
-            modifier = Modifier.weight(0.4f)
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight()
         )
 
         // 右侧：歌词
@@ -347,13 +361,15 @@ private fun LandscapeLocalMusicDetail(
             matchResult = matchResult,
             platformService = platformService,
             onWriteLyrics = onWriteLyrics,
-            modifier = Modifier.weight(0.6f)
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
         )
     }
 }
 
 /**
- * 本地音乐信息卡片（参考网络歌曲详情设计）
+ * 本地音乐信息卡片 - 参考网络歌曲详情设计
  */
 @Composable
 private fun LocalMusicInfoCard(
@@ -363,7 +379,6 @@ private fun LocalMusicInfoCard(
     platformService: PlatformService,
     modifier: Modifier = Modifier
 ) {
-
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -374,7 +389,7 @@ private fun LocalMusicInfoCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -489,7 +504,7 @@ private fun LocalMusicInfoCard(
 }
 
 /**
- * 本地歌词卡片（参考网络歌曲详情设计）
+ * 本地歌词卡片 - 参考网络歌曲详情设计
  */
 @Composable
 private fun LocalLyricsCard(
@@ -552,20 +567,29 @@ private fun LocalLyricsCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 歌词内容（可编辑）
-            androidx.compose.foundation.text.BasicTextField(
-                value = lyrics,
-                onValueChange = onLyricsChange,
-                readOnly = false,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    fontSize = 14.sp,
-                    lineHeight = 24.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+            // 歌词内容区域 - 使用卡片包裹
+            Card(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 )
-            )
+            ) {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = lyrics,
+                    onValueChange = onLyricsChange,
+                    readOnly = false,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 14.sp,
+                        lineHeight = 24.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
         }
     }
 }

@@ -15,7 +15,8 @@ import com.example.lddc.service.network.ApiException
  */
 
 /** QRC内容提取模式 */
-private val QRC_PATTERN = Regex("<Lyric_1 LyricType=\"1\" LyricContent=\"(.*?)\"/>", RegexOption.DOT_MATCHES_ALL)
+private val QRC_PATTERN =
+    Regex("<Lyric_1 LyricType=\"1\" LyricContent=\"(.*?)\"/>", RegexOption.DOT_MATCHES_ALL)
 
 /** 标签匹配模式：[ar:艺术家] */
 private val TAG_SPLIT_PATTERN = Regex("^\\[(\\w+):([^]]*)]$")
@@ -24,7 +25,8 @@ private val TAG_SPLIT_PATTERN = Regex("^\\[(\\w+):([^]]*)]$")
 private val LINE_SPLIT_PATTERN = Regex("^\\[(\\d+),(\\d+)](.*)$")
 
 /** 逐字时间戳匹配模式：单词(开始时间,持续时间) */
-private val WORD_SPLIT_PATTERN = Regex("(?:\\[\\d+,\\d+])?(?<content>(?:(?!\\(\\d+,\\d+\\)).)*?)\\((?<start>\\d+),(?<duration>\\d+)\\)")
+private val WORD_SPLIT_PATTERN =
+    Regex("(?:\\[\\d+,\\d+])?(?<content>(?:(?!\\(\\d+,\\d+\\)).)*?)\\((?<start>\\d+),(?<duration>\\d+)\\)")
 
 /** 空行标记匹配模式：(时间,0) */
 private val WORD_TIMESTAMP_PATTERN = Regex("^\\(\\d+,\\d+\\)$")
@@ -59,7 +61,8 @@ fun qrc2data(sQrc: String): Pair<Map<String, String>, LyricsData> {
 
             // 检查是否是空行标记 (时间,0)
             if (lineContent.startsWith("(") && lineContent.endsWith(")") &&
-                WORD_TIMESTAMP_PATTERN.matches(lineContent)) {
+                WORD_TIMESTAMP_PATTERN.matches(lineContent)
+            ) {
                 lyricsData.add(LyricsLine(lineStart, lineEnd, emptyList()))
                 return@forEach
             }
@@ -84,7 +87,13 @@ fun qrc2data(sQrc: String): Pair<Map<String, String>, LyricsData> {
 
             if (words.isEmpty()) {
                 // 如果没有逐字信息，将整个行作为一个字
-                lyricsData.add(LyricsLine(lineStart, lineEnd, listOf(LyricsWord(lineStart, lineEnd, lineContent))))
+                lyricsData.add(
+                    LyricsLine(
+                        lineStart,
+                        lineEnd,
+                        listOf(LyricsWord(lineStart, lineEnd, lineContent))
+                    )
+                )
             } else {
                 lyricsData.add(LyricsLine(lineStart, lineEnd, words))
             }

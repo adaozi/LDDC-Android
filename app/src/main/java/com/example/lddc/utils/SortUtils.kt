@@ -112,13 +112,13 @@ object SortUtils {
     private fun isChineseChar(char: Char): Boolean {
         val code = char.code
         return code in 0x4E00..0x9FFF ||
-               code in 0x3400..0x4DBF ||
-               code in 0x20000..0x2A6DF ||
-               code in 0x2A700..0x2B73F ||
-               code in 0x2B740..0x2B81F ||
-               code in 0x2B820..0x2CEAF ||
-               code in 0x2CEB0..0x2EBEF ||
-               code in 0x30000..0x3134F
+                code in 0x3400..0x4DBF ||
+                code in 0x20000..0x2A6DF ||
+                code in 0x2A700..0x2B73F ||
+                code in 0x2B740..0x2B81F ||
+                code in 0x2B820..0x2CEAF ||
+                code in 0x2CEB0..0x2EBEF ||
+                code in 0x30000..0x3134F
     }
 
     /**

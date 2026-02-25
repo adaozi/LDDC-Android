@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,7 +64,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lddc.model.LocalMusicInfo
 import com.example.lddc.model.LocalMusicMatchResult
@@ -110,7 +113,8 @@ fun LocalMusicListScreen(
 
     // 横竖屏检测
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // 权限状态
     var hasPermission by remember {
@@ -185,7 +189,8 @@ fun LocalMusicListScreen(
                     // 批量匹配按钮（仅在有音乐时显示）
                     if (scanState !is ScanState.Scanning &&
                         hasPermission &&
-                        displayedMusicList.isNotEmpty()) {
+                        displayedMusicList.isNotEmpty()
+                    ) {
                         if (matchState is MatchState.Matching) {
                             // 匹配中：显示停止按钮（正方形），使用特殊颜色
                             IconButton(onClick = { viewModel.cancelMatch() }) {
@@ -218,14 +223,14 @@ fun LocalMusicListScreen(
                             }
                         }) {
                             Icon(
-                                imageVector = if (viewMode == ViewMode.LIST) 
+                                imageVector = if (viewMode == ViewMode.LIST)
                                     Icons.Default.Folder else Icons.Default.List,
-                                contentDescription = if (viewMode == ViewMode.LIST) 
+                                contentDescription = if (viewMode == ViewMode.LIST)
                                     "文件夹视图" else "列表视图"
                             )
                         }
                     }
-                    
+
                     // 扫描按钮
                     if (scanState !is ScanState.Scanning && hasPermission) {
                         IconButton(onClick = { viewModel.startScan() }) {
@@ -270,8 +275,8 @@ fun LocalMusicListScreen(
                 }
 
                 scanState is ScanState.Completed ||
-                scanState is ScanState.Cancelled ||
-                scanState is ScanState.Error -> {
+                        scanState is ScanState.Cancelled ||
+                        scanState is ScanState.Error -> {
                     // 根据视图模式显示不同内容
                     when (viewMode) {
                         ViewMode.LIST -> {
@@ -289,6 +294,7 @@ fun LocalMusicListScreen(
                                 )
                             }
                         }
+
                         ViewMode.FOLDER -> {
                             // 文件夹视图 - 横竖屏适配
                             if (isLandscape && selectedFolder == null) {
@@ -326,7 +332,11 @@ fun LocalMusicListScreen(
                                         matchResults = matchResults,
                                         matchProgress = matchProgress,
                                         onMusicClick = onMusicSelected,
-                                        onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) },
+                                        onStartMatch = {
+                                            viewModel.showSaveModeDialog(
+                                                displayedMusicList
+                                            )
+                                        },
                                         isLandscape = isLandscape
                                     )
                                 }
@@ -651,7 +661,7 @@ private fun FolderListContent(
         items(folderList) { folderPath ->
             val musicCount = musicByFolder[folderPath]?.size ?: 0
             val folderName = File(folderPath).name
-            
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -865,23 +875,49 @@ private fun MusicListContent(
             }
         }
 
-        // 音乐列表
-        val listState = rememberLazyListState()
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                if (isLandscape) UiConstants.Padding.XLarge else UiConstants.Padding.Large
-            ),
-            verticalArrangement = Arrangement.spacedBy(if (isLandscape) UiConstants.Spacing.Medium else UiConstants.Spacing.Small)
-        ) {
-            items(musicList) { music ->
-                val matchResult = matchResults.find { it.localMusic.id == music.id }
-                LocalMusicListItem(
-                    music = music,
-                    matchResult = matchResult,
-                    onClick = { onMusicClick(music) }
-                )
+        // 音乐列表 - 横屏使用网格，竖屏使用列表
+        if (isLandscape) {
+            // 横屏：自适应网格布局
+            val gridState = rememberLazyGridState()
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 320.dp),
+                state = gridState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = UiConstants.Padding.XLarge,
+                    vertical = UiConstants.Spacing.Medium
+                ),
+                horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium),
+                verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium)
+            ) {
+                items(musicList) { music ->
+                    val matchResult = matchResults.find { it.localMusic.id == music.id }
+                    LocalMusicGridItem(
+                        music = music,
+                        matchResult = matchResult,
+                        onClick = { onMusicClick(music) }
+                    )
+                }
+            }
+        } else {
+            // 竖屏：单列列表
+            val listState = rememberLazyListState()
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    UiConstants.Padding.Large
+                ),
+                verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Small)
+            ) {
+                items(musicList) { music ->
+                    val matchResult = matchResults.find { it.localMusic.id == music.id }
+                    LocalMusicListItem(
+                        music = music,
+                        matchResult = matchResult,
+                        onClick = { onMusicClick(music) }
+                    )
+                }
             }
         }
     }
@@ -976,6 +1012,21 @@ private fun MatchingProgressBar(
  */
 @Composable
 private fun LocalMusicListItem(
+    music: LocalMusicInfo,
+    matchResult: LocalMusicMatchResult?,
+    onClick: () -> Unit
+) {
+    LocalMusicCard(
+        music = music,
+        onClick = onClick
+    )
+}
+
+/**
+ * 本地音乐网格项（用于横屏网格布局）
+ */
+@Composable
+private fun LocalMusicGridItem(
     music: LocalMusicInfo,
     matchResult: LocalMusicMatchResult?,
     onClick: () -> Unit

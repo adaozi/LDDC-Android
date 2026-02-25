@@ -51,9 +51,11 @@ class LocalLyricsWriter(private val context: Context) {
             LyricsWriteMode.EMBEDDED -> {
                 writeEmbeddedLyrics(filePath, lyrics, extension)
             }
+
             LyricsWriteMode.SEPARATE_FILE -> {
                 writeSeparateLyricsFile(filePath, lyrics)
             }
+
             LyricsWriteMode.BOTH -> {
                 val embeddedResult = writeEmbeddedLyrics(filePath, lyrics, extension)
                 val separateResult = writeSeparateLyricsFile(filePath, lyrics)
@@ -68,6 +70,7 @@ class LocalLyricsWriter(private val context: Context) {
                     } else null
                 )
             }
+
             LyricsWriteMode.AUTO -> {
                 // 先尝试写入内嵌标签
                 val embeddedResult = writeEmbeddedLyrics(filePath, lyrics, extension)
@@ -536,11 +539,11 @@ class LocalLyricsWriter(private val context: Context) {
         score -= garbledCount * 10
 
         // 6. 奖励可打印字符比例高的
-        val printableRatio = content.count { 
+        val printableRatio = content.count {
             it.isLetterOrDigit() || it.isWhitespace() || it in ".,!?;:'\"()-[]{}[]【】" ||
-            it.code in 0x4E00..0x9FFF || // CJK 统一汉字
-            it.code in 0x3000..0x303F || // CJK 标点符号
-            it.code in 0xFF00..0xFFEF    // 全角字符
+                    it.code in 0x4E00..0x9FFF || // CJK 统一汉字
+                    it.code in 0x3000..0x303F || // CJK 标点符号
+                    it.code in 0xFF00..0xFFEF    // 全角字符
         }.toFloat() / content.length
         score += (printableRatio * 30).toInt()
 
@@ -667,18 +670,22 @@ class LocalLyricsWriter(private val context: Context) {
                 // MAV 数字问题通常出现在这里
                 decodeISO8859WithChineseFallback(data)
             }
+
             0x01 -> {
                 // UTF-16 with BOM
                 decodeUTF16WithBOM(data)
             }
+
             0x02 -> {
                 // UTF-16 BE without BOM
                 decodeWithCharsetDetection(data, Charsets.UTF_16BE)
             }
+
             0x03 -> {
                 // UTF-8
                 decodeWithCharsetDetection(data, Charsets.UTF_8)
             }
+
             else -> {
                 // 未知编码，尝试自动检测
                 autoDecode(data)
@@ -694,12 +701,12 @@ class LocalLyricsWriter(private val context: Context) {
         // 首先尝试 ISO-8859-1
         try {
             val isoResult = String(data, Charsets.ISO_8859_1).trim { it == '\u0000' }
-            
+
             // 检查是否包含乱码特征
             // MAV 数字乱码通常表现为：数字正常，但中文显示为乱码
             val hasGarbledChinese = isoResult.contains(Regex("[锟斤拷浣犲紶柇戦浜]"))
             val hasReplacementChar = isoResult.contains('\uFFFD')
-            
+
             // 如果 ISO-8859-1 解码结果看起来正常（没有明显乱码），直接返回
             if (!hasGarbledChinese && !hasReplacementChar) {
                 // 进一步检查：如果包含大量非 ASCII 字符，可能是中文编码
@@ -862,7 +869,9 @@ class LocalLyricsWriter(private val context: Context) {
         score -= garbledCount * 5
 
         // 5. 奖励可打印字符比例高的
-        val printableRatio = text.count { it.isLetterOrDigit() || it.isWhitespace() || it in ".,!?;:'\"()-[]{}" }.toFloat() / text.length
+        val printableRatio =
+            text.count { it.isLetterOrDigit() || it.isWhitespace() || it in ".,!?;:'\"()-[]{}" }
+                .toFloat() / text.length
         score += (printableRatio * 20).toInt()
 
         // 6. 奖励包含中文字符的（对于中文歌曲）
@@ -898,7 +907,8 @@ class LocalLyricsWriter(private val context: Context) {
         if (nullCount > content.length * 0.1) return true
 
         // 5. 检查是否有大量乱码常见字符
-        val commonGarbled = content.count { it == '�' || it == '�' || it == '锟' || it == '斤' || it == '拷' }
+        val commonGarbled =
+            content.count { it == '�' || it == '�' || it == '锟' || it == '斤' || it == '拷' }
         return commonGarbled > 0
     }
 }

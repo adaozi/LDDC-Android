@@ -1,7 +1,7 @@
 package com.example.lddc.service.converter
 
 import android.annotation.SuppressLint
-import com.example.lddc.service.parser.*
+import com.example.lddc.service.parser.MultiLyricsData
 
 /**
  * SRT 字幕转换器

@@ -105,11 +105,18 @@ fun ResultsScreen(
 
     // 添加日志追踪
     LaunchedEffect(searchResults, filteredResults, isLoading, searchFilters) {
-        Log.d("ResultsScreen", "状态更新 - searchResults: ${searchResults.size}, filteredResults: ${filteredResults.size}, isLoading: $isLoading")
-        Log.d("ResultsScreen", "筛选条件 - keyword: '${searchFilters.keyword}', songName: '${searchFilters.songName}', artist: '${searchFilters.artist}', album: '${searchFilters.album}', duration: '${searchFilters.duration}', platforms: ${searchFilters.platforms}")
+        Log.d(
+            "ResultsScreen",
+            "状态更新 - searchResults: ${searchResults.size}, filteredResults: ${filteredResults.size}, isLoading: $isLoading"
+        )
+        Log.d(
+            "ResultsScreen",
+            "筛选条件 - keyword: '${searchFilters.keyword}', songName: '${searchFilters.songName}', artist: '${searchFilters.artist}', album: '${searchFilters.album}', duration: '${searchFilters.duration}', platforms: ${searchFilters.platforms}"
+        )
     }
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
         topBar = {
@@ -234,7 +241,7 @@ fun ResultsScreen(
 
                                     // 判断是否在滑动（第一个可见项或偏移量发生变化）
                                     val isScrolling = firstIndex != lastFirstVisibleItem ||
-                                        scrollOffset != lastFirstVisibleScrollOffset
+                                            scrollOffset != lastFirstVisibleScrollOffset
 
                                     // 更新上次状态
                                     lastFirstVisibleItem = firstIndex
@@ -301,7 +308,7 @@ fun ResultsScreen(
 
                                     // 判断是否在滑动（第一个可见项或偏移量发生变化）
                                     val isScrolling = firstIndex != lastFirstVisibleItem ||
-                                        scrollOffset != lastFirstVisibleScrollOffset
+                                            scrollOffset != lastFirstVisibleScrollOffset
 
                                     // 更新上次状态
                                     lastFirstVisibleItem = firstIndex

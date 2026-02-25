@@ -25,41 +25,53 @@ class FilterAndSortMusicUseCase {
      */
     fun filterMusic(musicList: List<Music>, searchFilters: SearchFilters): List<Music> {
         Log.d(TAG, "筛选开始 - 原始歌曲数: ${musicList.size}")
-        Log.d(TAG, "筛选条件 - songName: '${searchFilters.songName}', artist: '${searchFilters.artist}', album: '${searchFilters.album}', duration: '${searchFilters.duration}', platforms: ${searchFilters.platforms}")
-        
+        Log.d(
+            TAG,
+            "筛选条件 - songName: '${searchFilters.songName}', artist: '${searchFilters.artist}', album: '${searchFilters.album}', duration: '${searchFilters.duration}', platforms: ${searchFilters.platforms}"
+        )
+
         // 快速路径：如果所有筛选条件都是空的，直接返回原始列表，不做任何筛选
         val hasNoFilters = searchFilters.songName.isBlank() &&
-                          searchFilters.artist.isBlank() &&
-                          searchFilters.album.isBlank() &&
-                          searchFilters.duration.isBlank() &&
-                          searchFilters.platforms.isEmpty()
-                          
+                searchFilters.artist.isBlank() &&
+                searchFilters.album.isBlank() &&
+                searchFilters.duration.isBlank() &&
+                searchFilters.platforms.isEmpty()
+
         if (hasNoFilters) {
             Log.d(TAG, "无筛选条件，直接返回原始结果")
             return musicList
         }
-        
+
         val filtered = musicList.filter { music ->
             // 歌曲名筛选（模糊匹配）
-            (searchFilters.songName.isBlank() || music.title.contains(searchFilters.songName, ignoreCase = true)) &&
-            // 歌手筛选（模糊匹配）
-            (searchFilters.artist.isBlank() || music.artist.contains(searchFilters.artist, ignoreCase = true)) &&
-            // 专辑筛选（模糊匹配）
-            (searchFilters.album.isBlank() || music.album.contains(searchFilters.album, ignoreCase = true)) &&
-            // 时长筛选（包含匹配）
-            (searchFilters.duration.isBlank() || music.duration.contains(searchFilters.duration)) &&
-            // 平台筛选（多选，匹配任一即可）
-            (searchFilters.platforms.isEmpty() || searchFilters.platforms.any { platformName ->
-                val displayName = when (platformName) {
-                    "NE" -> "网易云音乐"
-                    "QM" -> "QQ音乐"
-                    "KG" -> "酷狗音乐"
-                    else -> platformName
-                }
-                music.platform.equals(displayName, ignoreCase = true)
-            })
+            (searchFilters.songName.isBlank() || music.title.contains(
+                searchFilters.songName,
+                ignoreCase = true
+            )) &&
+                    // 歌手筛选（模糊匹配）
+                    (searchFilters.artist.isBlank() || music.artist.contains(
+                        searchFilters.artist,
+                        ignoreCase = true
+                    )) &&
+                    // 专辑筛选（模糊匹配）
+                    (searchFilters.album.isBlank() || music.album.contains(
+                        searchFilters.album,
+                        ignoreCase = true
+                    )) &&
+                    // 时长筛选（包含匹配）
+                    (searchFilters.duration.isBlank() || music.duration.contains(searchFilters.duration)) &&
+                    // 平台筛选（多选，匹配任一即可）
+                    (searchFilters.platforms.isEmpty() || searchFilters.platforms.any { platformName ->
+                        val displayName = when (platformName) {
+                            "NE" -> "网易云音乐"
+                            "QM" -> "QQ音乐"
+                            "KG" -> "酷狗音乐"
+                            else -> platformName
+                        }
+                        music.platform.equals(displayName, ignoreCase = true)
+                    })
         }
-        
+
         Log.d(TAG, "筛选结束 - 筛选后歌曲数: ${filtered.size}")
         return filtered
     }
@@ -106,20 +118,4 @@ class FilterAndSortMusicUseCase {
         }
     }
 
-    /**
-     * 计算字符串相似度
-     */
-    fun calculateSimilarity(s1: String, s2: String): Float {
-        if (s1 == s2) return 1f
-        if (s1.isEmpty() || s2.isEmpty()) return 0f
-
-        val longer = if (s1.length > s2.length) s1 else s2
-        val shorter = if (s1.length > s2.length) s2 else s1
-
-        return if (longer.contains(shorter)) {
-            shorter.length.toFloat() / longer.length
-        } else {
-            0f
-        }
-    }
 }

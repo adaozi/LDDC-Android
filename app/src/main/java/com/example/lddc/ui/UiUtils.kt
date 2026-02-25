@@ -1,14 +1,17 @@
 package com.example.lddc.ui
 
-import com.example.lddc.utils.PlatformUtils
 import com.example.lddc.utils.LyricsUtils
+import com.example.lddc.utils.PlatformUtils
 
 /**
  * 获取平台显示名称
  *
  * @deprecated 请使用 PlatformUtils.getDisplayName()
  */
-@Deprecated("请使用 PlatformUtils.getDisplayName()", ReplaceWith("PlatformUtils.getDisplayName(platform)"))
+@Deprecated(
+    "请使用 PlatformUtils.getDisplayName()",
+    ReplaceWith("PlatformUtils.getDisplayName(platform)")
+)
 fun getPlatformDisplayName(platform: String): String {
     return PlatformUtils.getDisplayName(platform)
 }

@@ -1,17 +1,33 @@
 package com.example.lddc.service.api
 
-import com.example.lddc.model.*
+import com.example.lddc.model.APIResultList
+import com.example.lddc.model.Artist
+import com.example.lddc.model.LyricInfo
+import com.example.lddc.model.Lyrics
+import com.example.lddc.model.NetEaseAuth
+import com.example.lddc.model.SongInfo
+import com.example.lddc.model.Source
 import com.example.lddc.service.crypto.CryptoModule
-import com.example.lddc.service.network.NetworkModule
 import com.example.lddc.service.network.ApiException
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import com.example.lddc.service.network.NetworkModule
+import io.ktor.client.HttpClient
+import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.readBytes
+import io.ktor.http.ContentType
 import io.ktor.http.content.TextContent
+import io.ktor.http.setCookie
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * 网易云音乐API实现
@@ -51,13 +67,13 @@ class NetEaseApi(private val httpClient: HttpClient) {
 
         // 使用预定义的设备ID（与Python一致）
         val deviceId = NetEaseDeviceIds.getRandomDeviceId()
-        
+
         // 生成客户端签名
         val mac = NetworkModule.generateRandomMac()
         val randomStr = NetworkModule.generateRandomString(8)
         val hashPart = NetworkModule.md5(NetworkModule.generateRandomString(32))
         val clientSign = "$mac@@@$randomStr@@@@@@$hashPart"
-        
+
         // 生成设备型号
         val deviceModels = listOf(
             "MS-iCraft B760M WIFI",
@@ -66,7 +82,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "ASRock X670E Taichi"
         )
         val deviceModel = deviceModels.random()
-        
+
         // 构建预请求cookies
         val preCookies = mapOf(
             "os" to "pc",
@@ -77,7 +93,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "mode" to deviceModel,
             "appver" to "3.1.3.203419"
         )
-        
+
         // 构建请求参数
         val path = "/eapi/register/anonimous"
         val params = mapOf(
@@ -85,10 +101,10 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "e_r" to true,
             "header" to buildParamsHeader(preCookies)
         )
-        
+
         // 加密参数
         val encryptedParams = CryptoModule.eapiParamsEncrypt(path.replace("eapi", "api"), params)
-        
+
         val response = httpClient.post("https://interface.music.163.com$path") {
             headers {
                 buildHeaders(preCookies).forEach { (key, value) ->
@@ -97,7 +113,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
             }
             setBody(TextContent(encryptedParams, ContentType.Application.FormUrlEncoded))
         }
-        
+
         // 解密响应 - 直接读取原始字节数据
         val responseData = response.readBytes()
 
@@ -119,13 +135,13 @@ class NetEaseApi(private val httpClient: HttpClient) {
         if (code != 200) {
             throw ApiException("网易云音乐登录失败: $code, $message")
         }
-        
+
         // 提取用户ID
         val userId = jsonResponse["userId"]?.jsonPrimitive?.content ?: ""
         if (userId.isEmpty()) {
             throw ApiException("网易云音乐登录失败: 未获取到用户ID")
         }
-        
+
         // 构建cookies
         val cookies = mutableMapOf(
             "WEVNSM" to "1.0.0",
@@ -138,22 +154,22 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "appver" to preCookies["appver"]!!,
             "WNMCID" to "${NetworkModule.generateRandomString(6)}.${System.currentTimeMillis() - (1000..10000).random()}.01.0"
         )
-        
+
         // 添加响应cookies
-        response.setCookie().forEach {cookie ->
+        response.setCookie().forEach { cookie ->
             cookies[cookie.name] = cookie.value
         }
-        
+
         // 设置认证信息
         auth = NetEaseAuth(
             userId = userId,
             cookies = cookies,
             expire = NetworkModule.getCurrentTimestamp() + 864000 // 10天过期
         )
-        
+
         isInited = true
     }
-    
+
     /**
      * 构建参数头部 - 与Python保持一致，使用紧凑JSON格式
      */
@@ -161,7 +177,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
         // 手动构建JSON字符串以确保与Python格式完全一致（无空格）
         return "{\"clientSign\":\"${cookies["clientSign"]!!}\",\"os\":\"${cookies["os"]!!}\",\"appver\":\"${cookies["appver"]!!}\",\"deviceId\":\"${cookies["deviceId"]!!}\",\"requestId\":0,\"osver\":\"${cookies["osver"]!!}\"}"
     }
-    
+
     /**
      * 构建请求头部
      */
@@ -179,71 +195,73 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "sec-fetch-dest" to "empty",
             "accept-language" to "en-US,en;q=0.9"
         )
-        
+
         // 添加cookies
         val cookieString = cookies.entries.joinToString("; ") { "${it.key}=${it.value}" }
         headers["cookie"] = cookieString
-        
+
         return headers
     }
-    
+
     /**
      * 发送API请求
      */
-    private suspend fun request(path: String, params: Map<String, Any>): Map<String, Any> = withContext(Dispatchers.IO) {
-        if (!isInited || (auth?.expire ?: 0) < NetworkModule.getCurrentTimestamp()) {
-            init()
-        }
-        
-        // 构建请求参数
-        val requestParams = params.toMutableMap()
-        requestParams["e_r"] = true
-        requestParams["header"] = buildParamsHeader(auth?.cookies ?: emptyMap())
-        
-        // 加密参数
-        val encryptedParams = CryptoModule.eapiParamsEncrypt(path.replace("eapi", "api"), requestParams)
+    private suspend fun request(path: String, params: Map<String, Any>): Map<String, Any> =
+        withContext(Dispatchers.IO) {
+            if (!isInited || (auth?.expire ?: 0) < NetworkModule.getCurrentTimestamp()) {
+                init()
+            }
 
-        // 构建 cache_key
-        val cacheKey = if (params.containsKey("cache_key")) {
-            params["cache_key"] as String
-        } else {
-            null
-        }
+            // 构建请求参数
+            val requestParams = params.toMutableMap()
+            requestParams["e_r"] = true
+            requestParams["header"] = buildParamsHeader(auth?.cookies ?: emptyMap())
 
-        // 发送请求
-        val response = httpClient.post("https://interface.music.163.com$path") {
-            headers {
-                buildHeaders(auth?.cookies ?: emptyMap()).forEach { (key, value) ->
-                    append(key, value)
+            // 加密参数
+            val encryptedParams =
+                CryptoModule.eapiParamsEncrypt(path.replace("eapi", "api"), requestParams)
+
+            // 构建 cache_key
+            val cacheKey = if (params.containsKey("cache_key")) {
+                params["cache_key"] as String
+            } else {
+                null
+            }
+
+            // 发送请求
+            val response = httpClient.post("https://interface.music.163.com$path") {
+                headers {
+                    buildHeaders(auth?.cookies ?: emptyMap()).forEach { (key, value) ->
+                        append(key, value)
+                    }
                 }
+                if (cacheKey != null) {
+                    parameter("cache_key", cacheKey)
+                }
+                setBody(TextContent(encryptedParams, ContentType.Application.FormUrlEncoded))
             }
-            if (cacheKey != null) {
-                parameter("cache_key", cacheKey)
+
+            // 解密响应 - 直接读取原始字节数据
+            val responseData = response.readBytes()
+            val decryptedResponse = CryptoModule.eapiResponseDecrypt(responseData)
+            val jsonResponse = Json.parseToJsonElement(decryptedResponse).jsonObject
+
+            // 检查响应状态
+            val code = jsonResponse["code"]?.jsonPrimitive?.intOrNull ?: -1
+            if (code != 200) {
+                val message = jsonResponse["message"]?.jsonPrimitive?.content ?: "未知错误"
+                throw ApiException("网易云音乐API错误: $code, $message")
             }
-            setBody(TextContent(encryptedParams, ContentType.Application.FormUrlEncoded))
+
+            return@withContext jsonResponse.toMap()
         }
 
-        // 解密响应 - 直接读取原始字节数据
-        val responseData = response.readBytes()
-        val decryptedResponse = CryptoModule.eapiResponseDecrypt(responseData)
-        val jsonResponse = Json.parseToJsonElement(decryptedResponse).jsonObject
-        
-        // 检查响应状态
-        val code = jsonResponse["code"]?.jsonPrimitive?.intOrNull ?: -1
-        if (code != 200) {
-            val message = jsonResponse["message"]?.jsonPrimitive?.content ?: "未知错误"
-            throw ApiException("网易云音乐API错误: $code, $message")
-        }
-        
-        return@withContext jsonResponse.toMap()
-    }
-    
     /**
      * 将JsonObject转换为Map
      */
     private fun JsonObject.toMap(): Map<String, Any> {
         val result = mutableMapOf<String, Any>()
-        this.forEach {(key, value) ->
+        this.forEach { (key, value) ->
             result[key] = when (value) {
                 is JsonPrimitive -> value.content
                 is JsonObject -> value.toMap()
@@ -252,22 +270,24 @@ class NetEaseApi(private val httpClient: HttpClient) {
         }
         return result
     }
-    
+
     /**
      * 将JsonArray转换为List
      */
     private fun JsonArray.toList(): List<Any> {
         val result = mutableListOf<Any>()
-        this.forEach {value ->
-            result.add(when (value) {
-                is JsonPrimitive -> value.content
-                is JsonObject -> value.toMap()
-                is JsonArray -> value.toList()
-            })
+        this.forEach { value ->
+            result.add(
+                when (value) {
+                    is JsonPrimitive -> value.content
+                    is JsonObject -> value.toMap()
+                    is JsonArray -> value.toList()
+                }
+            )
         }
         return result
     }
-    
+
     /**
      * 搜索歌曲
      */
@@ -277,7 +297,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
     ): APIResultList<SongInfo> = withContext(Dispatchers.IO) {
         val pagesize = 20
         val offset = (page - 1) * pagesize
-        
+
         val params = mapOf(
             "keyword" to keyword,
             "scene" to "NORMAL",
@@ -285,16 +305,17 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "limit" to pagesize.toString(),
             "offset" to offset.toString()
         )
-        
+
         val data = request("/eapi/search/song/list/page", params)
         val jsonData = data as? Map<String, Any> ?: emptyMap<String, Any>()
 
         offset
-        
-        val resources = (jsonData["data"] as? Map<String, Any>)?.get("resources") as? List<Any> ?: emptyList<Any>()
+
+        val resources = (jsonData["data"] as? Map<String, Any>)?.get("resources") as? List<Any>
+            ?: emptyList<Any>()
         val formattedSongs = formatSongInfos(resources)
         (jsonData["data"] as? Map<String, Any>)?.get("totalCount") as? Number ?: formattedSongs.size
-        
+
         APIResultList(
             results = formattedSongs
         )
@@ -316,7 +337,7 @@ class NetEaseApi(private val httpClient: HttpClient) {
             )
         )
     }
-    
+
     /**
      * 获取歌词
      */
@@ -328,10 +349,10 @@ class NetEaseApi(private val httpClient: HttpClient) {
             "rv" to "-1",
             "yv" to "-1"
         )
-        
+
         val data = request("/eapi/song/lyric/v1", params)
         val jsonData = data as? Map<String, Any> ?: emptyMap<String, Any>()
-        
+
         val lyrics = Lyrics(
             title = songInfo.title,
             artist = songInfo.artist.name,
@@ -340,18 +361,18 @@ class NetEaseApi(private val httpClient: HttpClient) {
             source = Source.NE,
             duration = songInfo.duration
         )
-        
+
         // 处理歌词标签
         val tags = mutableMapOf<String, String>()
         tags["ar"] = songInfo.artist.name
         tags["al"] = songInfo.album
         tags["ti"] = songInfo.title
-        
+
         // 处理歌词贡献者
         (jsonData["lyricUser"] as? Map<String, Any>)?.let {
             tags["by"] = it["nickname"] as? String ?: ""
         }
-        
+
         (jsonData["transUser"] as? Map<String, Any>)?.let {
             val transUser = it["nickname"] as? String ?: ""
             if (tags.containsKey("by")) {
@@ -360,13 +381,13 @@ class NetEaseApi(private val httpClient: HttpClient) {
                 tags["by"] = transUser
             }
         }
-        
+
         // 处理歌词内容
         var content = ""
         var orig = ""
         var ts = ""
         var roma = ""
-        
+
         // 检查是否有YRC歌词
         if (jsonData.containsKey("yrc")) {
             val yrc = (jsonData["yrc"] as? Map<String, Any>)?.get("lyric") as? String ?: ""
@@ -382,19 +403,19 @@ class NetEaseApi(private val httpClient: HttpClient) {
                 content = lrc
             }
         }
-        
+
         // 处理翻译歌词
         val tlyric = (jsonData["tlyric"] as? Map<String, Any>)?.get("lyric") as? String ?: ""
         if (tlyric.isNotEmpty()) {
             ts = tlyric
         }
-        
+
         // 处理罗马音歌词
         val romalrc = (jsonData["romalrc"] as? Map<String, Any>)?.get("lyric") as? String ?: ""
         if (romalrc.isNotEmpty()) {
             roma = romalrc
         }
-        
+
         return@withContext lyrics.copy(
             content = content,
             tags = tags,
@@ -403,22 +424,24 @@ class NetEaseApi(private val httpClient: HttpClient) {
             roma = roma
         )
     }
-    
+
     /**
      * 格式化歌曲信息
      */
     private fun formatSongInfos(songInfos: List<*>): List<SongInfo> {
         return songInfos.mapNotNull { info ->
             val songMap = info as? Map<String, Any> ?: return@mapNotNull null
-            
+
             // 处理嵌套的歌曲数据
-            val simpleSongData = (songMap["baseInfo"] as? Map<String, Any>)?.get("simpleSongData") as? Map<String, Any> ?: songMap
-            
+            val simpleSongData =
+                (songMap["baseInfo"] as? Map<String, Any>)?.get("simpleSongData") as? Map<String, Any>
+                    ?: songMap
+
             val artists = (simpleSongData["ar"] as? List<Any>)?.mapNotNull {
                 val artistMap = it as? Map<String, Any> ?: return@mapNotNull null
                 Artist(artistMap["name"] as? String ?: "")
             } ?: emptyList()
-            
+
             val artistName = artists.joinToString("/") { it.name }
             val albumMap = simpleSongData["al"] as? Map<String, Any>
             val album = albumMap?.get("name") as? String ?: ""
@@ -458,5 +481,5 @@ class NetEaseApi(private val httpClient: HttpClient) {
             )
         }
     }
-    
+
 }

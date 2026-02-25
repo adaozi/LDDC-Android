@@ -6,12 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 
 /**
@@ -50,21 +44,6 @@ object PermissionManager {
      */
     fun getWriteStoragePermission(): String {
         return Manifest.permission.WRITE_EXTERNAL_STORAGE
-    }
-
-    /**
-     * 检查是否有写入存储权限
-     */
-    fun hasWriteStoragePermission(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-            ContextCompat.checkSelfPermission(
-                context,
-                getWriteStoragePermission()
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            // Android 11+ 不需要 WRITE_EXTERNAL_STORAGE 权限来写入媒体文件
-            true
-        }
     }
 
     /**
@@ -112,14 +91,6 @@ object PermissionManager {
         }
     }
 
-    /**
-     * 检查是否有所需的所有权限
-     */
-    fun hasAllPermissions(context: Context): Boolean {
-        return getAllRequiredPermissions().all { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        }
-    }
 }
 
 /**
@@ -132,92 +103,3 @@ sealed class PermissionState {
     object ShowRationale : PermissionState()
 }
 
-/**
- * 音频权限请求 Composable
- *
- * 使用示例:
- * ```
- * val permissionState = rememberAudioPermissionState()
- *
- * when (permissionState.value) {
- *     PermissionState.Granted -> { /* 有权限，可以扫描音乐 */ }
- *     PermissionState.Denied -> { /* 无权限，显示提示 */ }
- *     else -> { /* 请求权限 */ }
- * }
- * ```
- */
-@Composable
-fun rememberAudioPermissionState(
-    onPermissionResult: (Boolean) -> Unit = {}
-): androidx.compose.runtime.State<PermissionState> {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val permissionState = remember { mutableStateOf<PermissionState>(PermissionState.Initial) }
-
-    // 检查当前权限状态
-    LaunchedEffect(Unit) {
-        if (PermissionManager.hasAudioPermission(context)) {
-            permissionState.value = PermissionState.Granted
-            onPermissionResult(true)
-        }
-    }
-
-    // 权限请求启动器
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        permissionState.value = if (isGranted) {
-            PermissionState.Granted
-        } else {
-            PermissionState.Denied
-        }
-        onPermissionResult(isGranted)
-    }
-
-    // 请求权限
-    LaunchedEffect(permissionState.value) {
-        if (permissionState.value == PermissionState.Initial) {
-            permissionLauncher.launch(PermissionManager.getAudioPermission())
-        }
-    }
-
-    return permissionState
-}
-
-/**
- * 多个权限请求 Composable
- */
-@Composable
-fun rememberMultiplePermissionsState(
-    permissions: List<String>,
-    onPermissionsResult: (Map<String, Boolean>) -> Unit = {}
-): androidx.compose.runtime.State<Map<String, Boolean>> {
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    // 检查已授权的权限
-    val initialState = permissions.associateWith { permission ->
-        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-    }
-
-    val permissionsState = remember { mutableStateOf(initialState) }
-
-    // 权限请求启动器
-    val permissionsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        permissionsState.value = results
-        onPermissionsResult(results)
-    }
-
-    // 如果有未授权的权限，自动请求
-    LaunchedEffect(Unit) {
-        val hasAllPermissions = permissions.all { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        }
-
-        if (!hasAllPermissions) {
-            permissionsLauncher.launch(permissions.toTypedArray())
-        }
-    }
-
-    return permissionsState
-}

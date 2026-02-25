@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec
  * 加密模块，提供各种加密和签名功能
  */
 object CryptoModule {
-    
+
     // 网易云音乐EAPI密钥
     private val EAPI_KEY = "e82ckenh8dichen8"
 
@@ -62,14 +62,14 @@ object CryptoModule {
             .replace("\r", "\\r")
             .replace("\t", "\\t")
     }
-    
+
     /**
      * 网易云音乐EAPI响应解密
      */
     fun eapiResponseDecrypt(data: ByteArray): String {
         return decryptAES(data, EAPI_KEY)
     }
-    
+
     // 设备ID XOR 密钥（与Python一致）
     private val DEVICEID_XOR_KEY = "3go8&$8*3*3h0k(2)2"
 
@@ -91,8 +91,16 @@ object CryptoModule {
         val md5Digest = messageDigest.digest(xoredString.toByteArray(Charsets.UTF_8))
 
         // Base64 编码 - 使用Android的Base64（支持API 24+），使用NO_WRAP避免换行
-        val combinedStr = "$deviceId ${android.util.Base64.encodeToString(md5Digest, android.util.Base64.NO_WRAP)}"
-        return android.util.Base64.encodeToString(combinedStr.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+        val combinedStr = "$deviceId ${
+            android.util.Base64.encodeToString(
+                md5Digest,
+                android.util.Base64.NO_WRAP
+            )
+        }"
+        return android.util.Base64.encodeToString(
+            combinedStr.toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_WRAP
+        )
     }
 
     /**
@@ -105,7 +113,7 @@ object CryptoModule {
         cipher.init(Cipher.ENCRYPT_MODE, secretKey)
         return cipher.doFinal(content.toByteArray())
     }
-    
+
     /**
      * AES解密
      */

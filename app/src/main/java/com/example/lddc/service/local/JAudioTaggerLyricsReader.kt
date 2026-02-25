@@ -5,11 +5,11 @@ import com.example.lddc.utils.CharsetDetector
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.Tag
+import org.jaudiotagger.tag.asf.AsfTag
+import org.jaudiotagger.tag.flac.FlacTag
 import org.jaudiotagger.tag.id3.AbstractID3v2Tag
 import org.jaudiotagger.tag.mp4.Mp4Tag
-import org.jaudiotagger.tag.asf.AsfTag
 import org.jaudiotagger.tag.vorbiscomment.VorbisCommentTag
-import org.jaudiotagger.tag.flac.FlacTag
 import org.jaudiotagger.tag.wav.WavTag
 import java.io.File
 
@@ -233,39 +233,6 @@ class JAudioTaggerLyricsReader {
     }
 
     /**
-     * 检查文件是否有内嵌歌词
-     */
-    fun hasLyrics(filePath: String): Boolean {
-        return !readLyrics(filePath).isNullOrBlank()
-    }
-
-    /**
-     * 获取歌词的编码信息（用于调试）
-     */
-    fun getLyricsEncodingInfo(filePath: String): String {
-        return try {
-            val file = File(filePath)
-            if (!file.exists()) return "文件不存在"
-
-            val audioFile = AudioFileIO.read(file)
-            val tag = audioFile.tag
-
-            if (tag == null) return "无标签"
-
-            val lyrics = readLyrics(filePath)
-            if (lyrics == null) return "无歌词"
-
-            // 检测编码
-            val bytes = lyrics.toByteArray(Charsets.UTF_8)
-            val detectedEncoding = detectEncoding(bytes)
-
-            "歌词长度: ${lyrics.length}, 检测编码: $detectedEncoding"
-        } catch (e: Exception) {
-            "检测失败: ${e.message}"
-        }
-    }
-
-    /**
      * 简单的编码检测
      */
     private fun detectEncoding(data: ByteArray): String {
@@ -273,21 +240,24 @@ class JAudioTaggerLyricsReader {
         if (data.size >= 3 &&
             data[0] == 0xEF.toByte() &&
             data[1] == 0xBB.toByte() &&
-            data[2] == 0xBF.toByte()) {
+            data[2] == 0xBF.toByte()
+        ) {
             return "UTF-8 with BOM"
         }
 
         // 检查 UTF-16 LE BOM
         if (data.size >= 2 &&
             data[0] == 0xFF.toByte() &&
-            data[1] == 0xFE.toByte()) {
+            data[1] == 0xFE.toByte()
+        ) {
             return "UTF-16 LE"
         }
 
         // 检查 UTF-16 BE BOM
         if (data.size >= 2 &&
             data[0] == 0xFE.toByte() &&
-            data[1] == 0xFF.toByte()) {
+            data[1] == 0xFF.toByte()
+        ) {
             return "UTF-16 BE"
         }
 
@@ -313,12 +283,14 @@ class JAudioTaggerLyricsReader {
                     if ((data[i + 1].toInt() and 0xC0) != 0x80) return false
                     i += 2
                 }
+
                 b in 0xE0..0xEF -> {
                     if (i + 2 >= data.size) return false
                     if ((data[i + 1].toInt() and 0xC0) != 0x80) return false
                     if ((data[i + 2].toInt() and 0xC0) != 0x80) return false
                     i += 3
                 }
+
                 b in 0xF0..0xF7 -> {
                     if (i + 3 >= data.size) return false
                     if ((data[i + 1].toInt() and 0xC0) != 0x80) return false
@@ -326,6 +298,7 @@ class JAudioTaggerLyricsReader {
                     if ((data[i + 3].toInt() and 0xC0) != 0x80) return false
                     i += 4
                 }
+
                 else -> return false
             }
         }

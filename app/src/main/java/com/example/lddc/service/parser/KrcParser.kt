@@ -23,7 +23,8 @@ private val TAG_SPLIT_PATTERN = Regex("^\\[(\\w+):([^]]*)]$")
 private val LINE_SPLIT_PATTERN = Regex("^\\[(\\d+),(\\d+)](.*)$")
 
 /** 逐字时间戳匹配模式：<相对开始时间,持续时间,0>单词 */
-private val WORD_SPLIT_PATTERN = Regex("<(?<start>\\d+),(?<duration>\\d+),\\d+>(?<content>(?:.(?!\\d+,\\d+,\\d+>))*)")
+private val WORD_SPLIT_PATTERN =
+    Regex("<(?<start>\\d+),(?<duration>\\d+),\\d+>(?<content>(?:.(?!\\d+,\\d+,\\d+>))*)")
 
 /**
  * 将KRC文本解析为多语言歌词数据
@@ -83,7 +84,13 @@ fun krc2mdata(krc: String): Pair<Map<String, String>, MultiLyricsData> {
 
             if (words.isEmpty()) {
                 // 无逐字信息，整行作为一个单词
-                origList.add(LyricsLine(lineStart, lineEnd, listOf(LyricsWord(lineStart, lineEnd, lineContent))))
+                origList.add(
+                    LyricsLine(
+                        lineStart,
+                        lineEnd,
+                        listOf(LyricsWord(lineStart, lineEnd, lineContent))
+                    )
+                )
             } else {
                 origList.add(LyricsLine(lineStart, lineEnd, words))
             }
@@ -119,31 +126,38 @@ fun krc2mdata(krc: String): Pair<Map<String, String>, MultiLyricsData> {
                             for (k in origLine.words.indices) {
                                 if (k < romaLineContent.length()) {
                                     val origWord = origLine.words[k]
-                                    romaWords.add(LyricsWord(
-                                        origWord.start,
-                                        origWord.end,
-                                        romaLineContent.getString(k)
-                                    ))
+                                    romaWords.add(
+                                        LyricsWord(
+                                            origWord.start,
+                                            origWord.end,
+                                            romaLineContent.getString(k)
+                                        )
+                                    )
                                 }
                             }
                             romaList.add(LyricsLine(origLine.start, origLine.end, romaWords))
                         }
                     }
+
                     1 -> { // 逐行翻译
                         for (j in origList.indices) {
                             val origLine = origList[j]
                             if (j < lyricContent.length()) {
                                 val tsLineContent = lyricContent.getJSONArray(j)
                                 if (tsLineContent.length() > 0) {
-                                    tsList.add(LyricsLine(
-                                        origLine.start,
-                                        origLine.end,
-                                        listOf(LyricsWord(
+                                    tsList.add(
+                                        LyricsLine(
                                             origLine.start,
                                             origLine.end,
-                                            tsLineContent.getString(0)
-                                        ))
-                                    ))
+                                            listOf(
+                                                LyricsWord(
+                                                    origLine.start,
+                                                    origLine.end,
+                                                    tsLineContent.getString(0)
+                                                )
+                                            )
+                                        )
+                                    )
                                 }
                             }
                         }

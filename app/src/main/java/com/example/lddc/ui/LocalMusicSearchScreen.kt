@@ -17,12 +17,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -103,7 +104,8 @@ fun LocalMusicSearchScreen(
 
     // 横竖屏检测
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // 进入页面时自动搜索（只在首次进入时搜索）
     LaunchedEffect(selectedMusic) {
@@ -301,7 +303,7 @@ private fun LocalSearchPortraitResults(
 
                 // 判断是否在滑动（第一个可见项或偏移量发生变化）
                 val isScrolling = firstIndex != lastFirstVisibleItem ||
-                    scrollOffset != lastFirstVisibleScrollOffset
+                        scrollOffset != lastFirstVisibleScrollOffset
 
                 // 更新上次状态
                 lastFirstVisibleItem = firstIndex
@@ -370,7 +372,7 @@ private fun LocalSearchPortraitResults(
 }
 
 /**
- * 横屏搜索结果列表 - 双列网格
+ * 横屏搜索结果列表 - 自适应网格
  */
 @Composable
 private fun LocalSearchLandscapeResults(
@@ -381,24 +383,24 @@ private fun LocalSearchLandscapeResults(
     onMusicClick: (Music) -> Unit,
     onLoadMore: () -> Unit
 ) {
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     // 用于检测滑动方向
     var lastFirstVisibleItem by remember { mutableIntStateOf(0) }
     var lastFirstVisibleScrollOffset by remember { mutableIntStateOf(0) }
 
     // 监听滚动到底部
-    LaunchedEffect(listState, hasMoreData) {
+    LaunchedEffect(gridState, hasMoreData) {
         snapshotFlow {
             Triple(
-                listState.layoutInfo.visibleItemsInfo,
-                listState.firstVisibleItemIndex,
-                listState.firstVisibleItemScrollOffset
+                gridState.layoutInfo.visibleItemsInfo,
+                gridState.firstVisibleItemIndex,
+                gridState.firstVisibleItemScrollOffset
             )
         }
             .collect { (visibleItems, firstIndex, scrollOffset) ->
                 if (!hasMoreData || isLoadingMore) return@collect
 
-                val totalItems = listState.layoutInfo.totalItemsCount
+                val totalItems = gridState.layoutInfo.totalItemsCount
                 val lastVisibleItem = visibleItems.lastOrNull()?.index ?: 0
 
                 // 判断是否滑到底部
@@ -406,7 +408,7 @@ private fun LocalSearchLandscapeResults(
 
                 // 判断是否在滑动（第一个可见项或偏移量发生变化）
                 val isScrolling = firstIndex != lastFirstVisibleItem ||
-                    scrollOffset != lastFirstVisibleScrollOffset
+                        scrollOffset != lastFirstVisibleScrollOffset
 
                 // 更新上次状态
                 lastFirstVisibleItem = firstIndex
@@ -419,14 +421,16 @@ private fun LocalSearchLandscapeResults(
             }
     }
 
-    LazyColumn(
-        state = listState,
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 320.dp),
+        state = gridState,
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = UiConstants.Padding.XLarge),
+        horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium),
         verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium)
     ) {
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             val totalCount = searchResults.size
             val filteredCount = filteredResults.size
             val subtitle = if (filteredCount < totalCount) {
@@ -442,31 +446,17 @@ private fun LocalSearchLandscapeResults(
             )
         }
 
-        // 双列布局
-        val rows = filteredResults.chunked(2)
-        items(rows) { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium)
-            ) {
-                rowItems.forEach { music ->
-                    LocalSearchMusicCard(
-                        music = music,
-                        onClick = { onMusicClick(music) },
-                        modifier = Modifier.weight(1f),
-                        isLandscape = true
-                    )
-                }
-                // 如果只有一项，填充空白
-                if (rowItems.size < 2) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
+        items(filteredResults) { music ->
+            LocalSearchMusicCard(
+                music = music,
+                onClick = { onMusicClick(music) },
+                isLandscape = true
+            )
         }
 
         // 加载更多指示器
         if (isLoadingMore || hasMoreData) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 LoadMoreIndicator(
                     isLoading = isLoadingMore,
                     hasMoreData = hasMoreData,
@@ -475,7 +465,7 @@ private fun LocalSearchLandscapeResults(
             }
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Spacer(modifier = Modifier.height(UiConstants.Spacing.XXLarge))
             Text(
                 text = "点击歌曲选择该歌词",

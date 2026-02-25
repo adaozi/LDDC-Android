@@ -19,7 +19,6 @@ class SearchSongsUseCase(
 ) {
     companion object {
         private const val TAG = "SearchSongsUseCase"
-        private const val DEFAULT_PAGE_SIZE = 20
     }
 
     /**
@@ -65,7 +64,10 @@ class SearchSongsUseCase(
                 resultsBySource.values.flatten()
             }
 
-            Log.d(TAG, "Multi-search results: ${mergedResults.size} items from ${resultsBySource.size} sources")
+            Log.d(
+                TAG,
+                "Multi-search results: ${mergedResults.size} items from ${resultsBySource.size} sources"
+            )
             Result.success(mergedResults)
         } catch (e: Exception) {
             Log.e(TAG, "搜索失败", e)

@@ -84,20 +84,26 @@ class KugouApi(private val httpClient: HttpClient) {
                         JsonObject(acc + (entry.key.toString() to JsonPrimitive(entry.value.toString())))
                     }
                 )
+
                 else -> value.toString()
             }
             "${key}=${valueStr}"
         }
-        val content = "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA$paramStr$data" + "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA"
+        val content =
+            "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA$paramStr$data" + "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA"
         Log.d("KugouApi", "Signature content: $content")
         return NetworkModule.md5(content)
     }
-    
+
     /**
      * 构建请求参数
      * 参考 PC 端实现，Lyric 模块只需要 appid 和 clientver
      */
-    private fun buildParams(module: String, extraParams: Map<String, Any> = emptyMap(), mid: String): Map<String, Any> {
+    private fun buildParams(
+        module: String,
+        extraParams: Map<String, Any> = emptyMap(),
+        mid: String
+    ): Map<String, Any> {
         val params = mutableMapOf<String, Any>()
 
         when (module) {
@@ -105,6 +111,7 @@ class KugouApi(private val httpClient: HttpClient) {
                 params["appid"] = "3116"
                 params["clientver"] = "11070"
             }
+
             "album_song_list" -> {
                 params["dfid"] = "-"
                 params["appid"] = "3116"
@@ -113,6 +120,7 @@ class KugouApi(private val httpClient: HttpClient) {
                 params["clienttime"] = NetworkModule.getCurrentTimestamp()
                 params["uuid"] = "-"
             }
+
             else -> {
                 params["userid"] = "0"
                 params["appid"] = "3116"
@@ -152,7 +160,7 @@ class KugouApi(private val httpClient: HttpClient) {
         }
         return headers
     }
-    
+
     /**
      * 发送API请求
      */
@@ -196,35 +204,35 @@ class KugouApi(private val httpClient: HttpClient) {
                 setBody(data)
             }
         }
-        
+
         val responseData = response.bodyAsText()
         val jsonObject = Json.parseToJsonElement(responseData).jsonObject
         val result = mutableMapOf<String, Any>()
-        
-        jsonObject.forEach {(key, value) ->
+
+        jsonObject.forEach { (key, value) ->
             result[key] = when (value) {
                 is JsonPrimitive -> value.content
                 is JsonObject -> value.toMap()
                 is JsonArray -> value.toList()
             }
         }
-        
+
         val errorCode = (result["error_code"] as? Number)?.toInt() ?: 0
-        
+
         if (errorCode != 0 && errorCode != 200) {
             val errorMsg = result["error_msg"] as? String ?: "未知错误"
             throw ApiException("酷狗音乐API错误: $errorCode, $errorMsg")
         }
-        
+
         return@withContext result
     }
-    
+
     /**
      * 将JsonObject转换为Map
      */
     private fun JsonObject.toMap(): Map<String, Any> {
         val result = mutableMapOf<String, Any>()
-        this.forEach {(key, value) ->
+        this.forEach { (key, value) ->
             result[key] = when (value) {
                 is JsonPrimitive -> value.content
                 is JsonObject -> value.toMap()
@@ -233,22 +241,24 @@ class KugouApi(private val httpClient: HttpClient) {
         }
         return result
     }
-    
+
     /**
      * 将JsonArray转换为List
      */
     private fun JsonArray.toList(): List<Any> {
         val result = mutableListOf<Any>()
-        this.forEach {value ->
-            result.add(when (value) {
-                is JsonPrimitive -> value.content
-                is JsonObject -> value.toMap()
-                is JsonArray -> value.toList()
-            })
+        this.forEach { value ->
+            result.add(
+                when (value) {
+                    is JsonPrimitive -> value.content
+                    is JsonObject -> value.toMap()
+                    is JsonArray -> value.toList()
+                }
+            )
         }
         return result
     }
-    
+
     /**
      * 搜索歌曲
      */
@@ -275,7 +285,7 @@ class KugouApi(private val httpClient: HttpClient) {
             return@withContext oldSearch(keyword, page)
         }
     }
-    
+
     /**
      * 处理搜索响应
      */
@@ -287,19 +297,19 @@ class KugouApi(private val httpClient: HttpClient) {
         val startIndex = (page - 1) * pagesize
         val dataMap = data["data"] as? Map<*, *> ?: emptyMap<String, Any>()
         val lists = dataMap["lists"] as? List<*> ?: emptyList<Any>()
-        
+
         val formattedSongs = formatSongInfos(lists)
         if (formattedSongs.size == pagesize) {
             (dataMap["total"] as? Number)?.toInt() ?: formattedSongs.size
         } else {
             startIndex + formattedSongs.size
         }
-        
+
         return APIResultList(
             results = formattedSongs
         )
     }
-    
+
     /**
      * 备用搜索API
      */
@@ -310,7 +320,7 @@ class KugouApi(private val httpClient: HttpClient) {
         val domain = KG_DOMAINS.random()
         val pagesize = 20
         (page - 1) * pagesize
-        
+
         val params = mapOf(
             "showtype" to "14",
             "highlight" to "",
@@ -324,7 +334,7 @@ class KugouApi(private val httpClient: HttpClient) {
             "version" to "9108",
             "page" to page.toString()
         )
-        
+
         val response = httpClient.get("http://$domain/api/v3/search/song") {
             parameters {
                 params.forEach { (key, value) ->
@@ -332,15 +342,16 @@ class KugouApi(private val httpClient: HttpClient) {
                 }
             }
         }
-        
+
         val responseData = response.bodyAsText()
         val jsonObject = Json.parseToJsonElement(responseData).jsonObject
-        val dataMap = (jsonObject["data"] as? JsonObject)?.toMap()?.mapValues { it.value } ?: emptyMap<String, Any>()
+        val dataMap = (jsonObject["data"] as? JsonObject)?.toMap()?.mapValues { it.value }
+            ?: emptyMap<String, Any>()
         val infoList = (dataMap["info"] as? List<*>) ?: emptyList<Any>()
-        
+
         val formattedSongs = formatOldSongInfos(infoList)
         (dataMap["total"] as? Number)?.toInt() ?: formattedSongs.size
-        
+
         APIResultList(
             results = formattedSongs
         )
@@ -359,7 +370,10 @@ class KugouApi(private val httpClient: HttpClient) {
         val lyricInfo = lyricsList[0]
         val accesskey = lyricInfo.accesskey ?: throw ApiException("未获取到歌词accesskey")
 
-        Log.d("KugouApi", "Getting lyrics for song: ${songInfo.title}, lyric id: ${lyricInfo.id}, accesskey: $accesskey")
+        Log.d(
+            "KugouApi",
+            "Getting lyrics for song: ${songInfo.title}, lyric id: ${lyricInfo.id}, accesskey: $accesskey"
+        )
 
         // 直接传递额外参数，request 函数会调用 buildParams
         val extraParams = mapOf(
@@ -376,15 +390,18 @@ class KugouApi(private val httpClient: HttpClient) {
             extraParams,
             "Lyric"
         )
-        
+
         val contenttype = (response["contenttype"] as? Number)?.toInt() ?: 0
         val content = response["content"] as? String ?: ""
         val info = response["info"] as? String ?: ""
         val errorCode = (response["error_code"] as? Number)?.toInt() ?: 0
-        Log.d("KugouApi", "Lyrics download response - contenttype: $contenttype, content length: ${content.length}, error_code: $errorCode")
+        Log.d(
+            "KugouApi",
+            "Lyrics download response - contenttype: $contenttype, content length: ${content.length}, error_code: $errorCode"
+        )
         Log.d("KugouApi", "Response info: $info")
         Log.d("KugouApi", "Response keys: ${response.keys}")
-        
+
         val lyricsContent: String
         if (contenttype == 2) {
             // 纯文本歌词
@@ -407,7 +424,7 @@ class KugouApi(private val httpClient: HttpClient) {
             duration = songInfo.duration
         )
     }
-    
+
     /**
      * 获取歌词列表
      */
@@ -427,7 +444,7 @@ class KugouApi(private val httpClient: HttpClient) {
             extraParams,
             "Lyric"
         )
-        
+
         val candidates = (response["candidates"] as? List<Any>) ?: emptyList<Any>()
         Log.d("KugouApi", "Found ${candidates.size} lyric candidates")
         if (candidates.isNotEmpty()) {
@@ -441,7 +458,10 @@ class KugouApi(private val httpClient: HttpClient) {
                 is String -> idValue
                 else -> ""
             }
-            Log.d("KugouApi", "Lyric candidate - id: $id, accesskey: ${lyricMap["accesskey"]}, nickname: ${lyricMap["nickname"]}")
+            Log.d(
+                "KugouApi",
+                "Lyric candidate - id: $id, accesskey: ${lyricMap["accesskey"]}, nickname: ${lyricMap["nickname"]}"
+            )
 
             LyricInfo(
                 id = id,
@@ -456,19 +476,19 @@ class KugouApi(private val httpClient: HttpClient) {
             )
         }
     }
-    
+
     /**
      * 格式化歌曲信息
      */
     private fun formatSongInfos(songInfos: List<*>): List<SongInfo> {
         return songInfos.mapNotNull { info ->
             val songMap = info as? Map<String, Any> ?: return@mapNotNull null
-            
+
             val singers = (songMap["Singers"] as? List<Any>)?.mapNotNull {
                 val singerMap = it as? Map<String, Any> ?: return@mapNotNull null
                 Artist(singerMap["name"] as? String ?: "")
             } ?: emptyList()
-            
+
             val artistName = singers.joinToString("/") { it.name }
             val album = songMap["AlbumName"] as? String ?: ""
             // Duration 可能是 String 或 Number 类型
@@ -477,10 +497,12 @@ class KugouApi(private val httpClient: HttpClient) {
                 is String -> d.toLongOrNull() ?: 0
                 else -> 0
             }
-            val transParam = (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap<String, Any>()
-            val language = LANGUAGE_MAPPING[transParam["language"] as? String ?: ""] ?: Language.OTHER
+            val transParam =
+                (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap<String, Any>()
+            val language =
+                LANGUAGE_MAPPING[transParam["language"] as? String ?: ""] ?: Language.OTHER
             val image = songMap["Image"] as? String ?: ""
-            
+
             // ID 可能是 String 或 Number 类型
             val songId = when (val id = songMap["ID"]) {
                 is Number -> id.toString()
@@ -517,14 +539,16 @@ class KugouApi(private val httpClient: HttpClient) {
     private fun formatOldSongInfos(songInfos: List<*>): List<SongInfo> {
         return songInfos.mapNotNull { info ->
             val songMap = info as? Map<String, Any> ?: return@mapNotNull null
-            
+
             val artistName = songMap["singername"] as? String ?: ""
             val album = songMap["album_name"] as? String ?: ""
             val duration = (songMap["duration"] as? Number)?.toLong() ?: 0
-            val transParam = (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap<String, Any>()
-            val language = LANGUAGE_MAPPING[transParam["language"] as? String ?: ""] ?: Language.OTHER
+            val transParam =
+                (songMap["trans_param"] as? Map<String, Any>) ?: emptyMap<String, Any>()
+            val language =
+                LANGUAGE_MAPPING[transParam["language"] as? String ?: ""] ?: Language.OTHER
             val image = songMap["Image"] as? String ?: ""
-            
+
             SongInfo(
                 id = (songMap["album_audio_id"] as? Number)?.toString() ?: "",
                 title = songMap["songname"] as? String ?: "",

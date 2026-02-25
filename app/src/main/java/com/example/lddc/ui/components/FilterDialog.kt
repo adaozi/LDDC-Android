@@ -90,7 +90,8 @@ fun FilterDialog(
                     "网易云音乐" to setOf("NE"),
                     "酷狗音乐" to setOf("KG")
                 )
-                val selectedPlatformLabel = platformOptions.find { it.second == tempFilters.platforms }?.first ?: "全部平台"
+                val selectedPlatformLabel =
+                    platformOptions.find { it.second == tempFilters.platforms }?.first ?: "全部平台"
 
                 ExposedDropdownMenuBox(
                     expanded = platformExpanded,

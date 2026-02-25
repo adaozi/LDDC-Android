@@ -35,12 +35,12 @@ class LocalMusicScanner(private val context: Context) {
 
     companion object {
         private const val TAG = "LocalMusicScanner"
-        
+
         // 与 PC 端 LDDC 保持一致的音频格式支持
         // 参考: LDDC-main/LDDC/core/song_info.py
         val SUPPORTED_FORMATS = listOf(
             // 常见格式
-            "mp3", "flac", "m4a", "m4b", "ogg", "oga", "wma", "wav", 
+            "mp3", "flac", "m4a", "m4b", "ogg", "oga", "wma", "wav",
             "ape", "aac", "opus", "mp4", "mpc", "mp+", "tta", "wv",
             // 额外格式 (与 PC 端同步)
             "3g2",          // 3GPP2 音频
@@ -56,7 +56,7 @@ class LocalMusicScanner(private val context: Context) {
     /**
      * 使用 MediaStore API 扫描所有音乐文件
      * 这是推荐的方式，可以获取系统媒体库中的所有音乐
-     * 
+     *
      * 注意：在 Android 10+ (API 29+) 上，DATA 列已被弃用，
      * 但我们仍然可以使用它来获取文件路径，只是不能保证所有文件都能访问。
      * 更好的方式是使用 ContentUris 构建 URI 来访问文件。
@@ -130,7 +130,8 @@ class LocalMusicScanner(private val context: Context) {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                 val albumIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
                 val dataColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
-                val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                val displayNameColumn =
+                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
                 val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
                 val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
@@ -159,18 +160,26 @@ class LocalMusicScanner(private val context: Context) {
                     val size = cursor.getLong(sizeColumn)
 
                     // 读取扩展信息
-                    val year = if (yearColumn != -1) cursor.getInt(yearColumn).takeIf { it > 0 } else null
+                    val year =
+                        if (yearColumn != -1) cursor.getInt(yearColumn).takeIf { it > 0 } else null
                     val genre = if (genreColumn != -1) cursor.getString(genreColumn) else null
-                    val bitrate = if (bitrateColumn != -1) cursor.getInt(bitrateColumn).takeIf { it > 0 } else null
+                    val bitrate = if (bitrateColumn != -1) cursor.getInt(bitrateColumn)
+                        .takeIf { it > 0 } else null
                     // SAMPLE_RATE 只在 Android Q+ 可用，使用字符串常量避免编译错误
                     val sampleRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         val sampleRateColumn = cursor.getColumnIndex("sample_rate")
-                        if (sampleRateColumn != -1) cursor.getInt(sampleRateColumn).takeIf { it > 0 } else null
+                        if (sampleRateColumn != -1) cursor.getInt(sampleRateColumn)
+                            .takeIf { it > 0 } else null
                     } else null
-                    val trackNumber = if (trackColumn != -1) cursor.getInt(trackColumn).takeIf { it > 0 } else null
-                    val composer = if (composerColumn != -1) cursor.getString(composerColumn) else null
-                    val dateAdded = if (dateAddedColumn != -1) cursor.getLong(dateAddedColumn).takeIf { it > 0 } else null
-                    val dateModified = if (dateModifiedColumn != -1) cursor.getLong(dateModifiedColumn).takeIf { it > 0 } else null
+                    val trackNumber = if (trackColumn != -1) cursor.getInt(trackColumn)
+                        .takeIf { it > 0 } else null
+                    val composer =
+                        if (composerColumn != -1) cursor.getString(composerColumn) else null
+                    val dateAdded = if (dateAddedColumn != -1) cursor.getLong(dateAddedColumn)
+                        .takeIf { it > 0 } else null
+                    val dateModified =
+                        if (dateModifiedColumn != -1) cursor.getLong(dateModifiedColumn)
+                            .takeIf { it > 0 } else null
 
                     // 使用 ContentUris 构建内容 URI
                     val contentUri = ContentUris.withAppendedId(
@@ -265,7 +274,10 @@ class LocalMusicScanner(private val context: Context) {
                             val jAudioReader = JAudioTaggerMetadataReader()
                             val audioMetadata = jAudioReader.readMetadata(filePath)
                             if (audioMetadata != null) {
-                                Log.d(TAG, "使用 JAudioTagger 读取到元数据: ${audioMetadata.title} - ${audioMetadata.artist}")
+                                Log.d(
+                                    TAG,
+                                    "使用 JAudioTagger 读取到元数据: ${audioMetadata.title} - ${audioMetadata.artist}"
+                                )
                                 localMusic = audioMetadata.toLocalMusicInfo(localMusic.id).copy(
                                     filePath = localMusic.filePath,
                                     uri = localMusic.uri,
@@ -499,11 +511,13 @@ class LocalMusicScanner(private val context: Context) {
                 if (cursor.moveToFirst()) {
                     val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                     val albumIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
-                    val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                    val displayNameColumn =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
                     val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
                     val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                     val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-                    val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                    val durationColumn =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
                     val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
                     val yearColumn = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR)
                     val genreColumn = cursor.getColumnIndex(MediaStore.Audio.Media.GENRE)
@@ -511,7 +525,8 @@ class LocalMusicScanner(private val context: Context) {
                     val trackColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK)
                     val composerColumn = cursor.getColumnIndex(MediaStore.Audio.Media.COMPOSER)
                     val dateAddedColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED)
-                    val dateModifiedColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED)
+                    val dateModifiedColumn =
+                        cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED)
 
                     val id = cursor.getLong(idColumn)
                     val albumId = if (albumIdColumn != -1) cursor.getLong(albumIdColumn) else -1
@@ -521,17 +536,25 @@ class LocalMusicScanner(private val context: Context) {
                     val album = cursor.getString(albumColumn) ?: "未知专辑"
                     val duration = cursor.getLong(durationColumn)
                     val size = cursor.getLong(sizeColumn)
-                    val year = if (yearColumn != -1) cursor.getInt(yearColumn).takeIf { it > 0 } else null
+                    val year =
+                        if (yearColumn != -1) cursor.getInt(yearColumn).takeIf { it > 0 } else null
                     val genre = if (genreColumn != -1) cursor.getString(genreColumn) else null
-                    val bitrate = if (bitrateColumn != -1) cursor.getInt(bitrateColumn).takeIf { it > 0 } else null
+                    val bitrate = if (bitrateColumn != -1) cursor.getInt(bitrateColumn)
+                        .takeIf { it > 0 } else null
                     val sampleRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         val sampleRateColumn = cursor.getColumnIndex("sample_rate")
-                        if (sampleRateColumn != -1) cursor.getInt(sampleRateColumn).takeIf { it > 0 } else null
+                        if (sampleRateColumn != -1) cursor.getInt(sampleRateColumn)
+                            .takeIf { it > 0 } else null
                     } else null
-                    val trackNumber = if (trackColumn != -1) cursor.getInt(trackColumn).takeIf { it > 0 } else null
-                    val composer = if (composerColumn != -1) cursor.getString(composerColumn) else null
-                    val dateAdded = if (dateAddedColumn != -1) cursor.getLong(dateAddedColumn).takeIf { it > 0 } else null
-                    val dateModified = if (dateModifiedColumn != -1) cursor.getLong(dateModifiedColumn).takeIf { it > 0 } else null
+                    val trackNumber = if (trackColumn != -1) cursor.getInt(trackColumn)
+                        .takeIf { it > 0 } else null
+                    val composer =
+                        if (composerColumn != -1) cursor.getString(composerColumn) else null
+                    val dateAdded = if (dateAddedColumn != -1) cursor.getLong(dateAddedColumn)
+                        .takeIf { it > 0 } else null
+                    val dateModified =
+                        if (dateModifiedColumn != -1) cursor.getLong(dateModifiedColumn)
+                            .takeIf { it > 0 } else null
 
                     val filePath = musicInfo.filePath ?: ""
 
@@ -805,6 +828,7 @@ class LocalMusicScanner(private val context: Context) {
                 file.isDirectory && includeSubDirs -> {
                     collectAudioFiles(file, includeSubDirs, result)
                 }
+
                 file.isFile && isAudioFile(file) -> {
                     result.add(file)
                 }
@@ -837,14 +861,21 @@ class LocalMusicScanner(private val context: Context) {
             val jAudioReader = JAudioTaggerMetadataReader()
             val audioMetadata = jAudioReader.readMetadata(file.absolutePath)
             if (audioMetadata != null) {
-                Log.d(TAG, "JAudioTagger 读取成功: ${audioMetadata.title} - ${audioMetadata.artist}")
+                Log.d(
+                    TAG,
+                    "JAudioTagger 读取成功: ${audioMetadata.title} - ${audioMetadata.artist}"
+                )
                 return audioMetadata.toLocalMusicInfo(file.absolutePath.hashCode().toLong()).copy(
                     hasLyrics = hasLyrics,
                     lyricsPath = lyricsPath
                 )
             }
         } catch (e: Exception) {
-            Log.w(TAG, "JAudioTagger 读取失败，回退到 MediaMetadataRetriever: ${file.absolutePath}", e)
+            Log.w(
+                TAG,
+                "JAudioTagger 读取失败，回退到 MediaMetadataRetriever: ${file.absolutePath}",
+                e
+            )
         }
 
         // 方法2: 使用 MediaMetadataRetriever 作为回退
@@ -852,13 +883,17 @@ class LocalMusicScanner(private val context: Context) {
         return try {
             retriever.setDataSource(file.absolutePath)
 
-            val title = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)
-                ?: file.nameWithoutExtension
-            val artist = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                ?: "未知艺术家"
-            val album = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM)
-                ?: "未知专辑"
-            val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val title =
+                retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)
+                    ?: file.nameWithoutExtension
+            val artist =
+                retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                    ?: "未知艺术家"
+            val album =
+                retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM)
+                    ?: "未知专辑"
+            val durationStr =
+                retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
             val duration = durationStr?.toLongOrNull() ?: 0
 
             LocalMusicInfo(
@@ -942,7 +977,7 @@ class LocalMusicScanner(private val context: Context) {
                 Uri.parse("content://media/external/audio/albumart"),
                 albumId
             )
-            
+
             // 检查 URI 是否有效
             context.contentResolver.openInputStream(albumArtUri)?.close()
             albumArtUri
@@ -1008,7 +1043,8 @@ class LocalMusicScanner(private val context: Context) {
 
             // 如果缓存文件已存在且未过期（24小时内），直接返回
             if (cacheFile.exists() &&
-                (System.currentTimeMillis() - cacheFile.lastModified()) < 24 * 60 * 60 * 1000) {
+                (System.currentTimeMillis() - cacheFile.lastModified()) < 24 * 60 * 60 * 1000
+            ) {
                 return Uri.fromFile(cacheFile)
             }
 
@@ -1027,10 +1063,10 @@ class LocalMusicScanner(private val context: Context) {
      */
     private fun getAlbumArtFromFolder(filePath: String): Uri? {
         if (filePath.isEmpty()) return null
-        
+
         val file = File(filePath)
         val parentDir = file.parentFile ?: return null
-        
+
         // 常见的专辑封面文件名
         val coverNames = listOf(
             "cover.jpg", "cover.jpeg", "cover.png",
@@ -1041,14 +1077,14 @@ class LocalMusicScanner(private val context: Context) {
             file.nameWithoutExtension + ".jpeg",
             file.nameWithoutExtension + ".png"
         )
-        
+
         for (coverName in coverNames) {
             val coverFile = File(parentDir, coverName)
             if (coverFile.exists() && coverFile.isFile) {
                 return Uri.fromFile(coverFile)
             }
         }
-        
+
         // 如果没有找到特定名称的图片，尝试查找目录中的第一个图片文件
         val imageExtensions = setOf("jpg", "jpeg", "png", "bmp", "webp")
         parentDir.listFiles()?.firstOrNull { f ->
@@ -1056,7 +1092,7 @@ class LocalMusicScanner(private val context: Context) {
         }?.let {
             return Uri.fromFile(it)
         }
-        
+
         return null
     }
 

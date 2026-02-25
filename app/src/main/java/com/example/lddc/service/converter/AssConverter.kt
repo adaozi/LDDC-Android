@@ -1,7 +1,8 @@
 package com.example.lddc.service.converter
 
 import android.annotation.SuppressLint
-import com.example.lddc.service.parser.*
+import com.example.lddc.service.parser.LyricsLine
+import com.example.lddc.service.parser.MultiLyricsData
 
 /**
  * ASS 字幕转换器（Advanced SubStation Alpha）

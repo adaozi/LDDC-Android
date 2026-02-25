@@ -1,21 +1,28 @@
 package com.example.lddc.service
 
-import com.example.lddc.model.*
-import com.example.lddc.service.api.*
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
+import android.util.Log
+import com.example.lddc.model.APIResultList
+import com.example.lddc.model.LyricInfo
+import com.example.lddc.model.Lyrics
+import com.example.lddc.model.SearchType
+import com.example.lddc.model.SongInfo
+import com.example.lddc.model.Source
+import com.example.lddc.service.api.KugouApi
+import com.example.lddc.service.api.NetEaseApi
+import com.example.lddc.service.api.QQMusicApi
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import android.util.Log
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 /**
  * 歌词API服务实现类
- * 
+ *
  * 提供统一的歌词获取接口，支持多平台（QQ音乐、网易云音乐、酷狗音乐）歌词搜索和获取
  * 所有网络请求都在 IO 线程执行，搜索支持并行处理以提高速度
  */
@@ -115,9 +122,18 @@ class LyricsApiServiceImpl : LyricsApiService {
             } ?: throw IllegalArgumentException("Unsupported source")
 
             when (api) {
-                is QQMusicApi -> if (info is SongInfo) api.getLyrics(info) else throw IllegalArgumentException("Invalid info type")
-                is NetEaseApi -> if (info is SongInfo) api.getLyrics(info) else throw IllegalArgumentException("Invalid info type")
-                is KugouApi -> if (info is SongInfo) api.getLyrics(info) else throw IllegalArgumentException("Invalid info type")
+                is QQMusicApi -> if (info is SongInfo) api.getLyrics(info) else throw IllegalArgumentException(
+                    "Invalid info type"
+                )
+
+                is NetEaseApi -> if (info is SongInfo) api.getLyrics(info) else throw IllegalArgumentException(
+                    "Invalid info type"
+                )
+
+                is KugouApi -> if (info is SongInfo) api.getLyrics(info) else throw IllegalArgumentException(
+                    "Invalid info type"
+                )
+
                 else -> throw IllegalArgumentException("Unsupported API implementation")
             }
         }
@@ -130,14 +146,15 @@ class LyricsApiServiceImpl : LyricsApiService {
      * @return Pair<歌词对象, 歌词格式类型>
      *         歌词格式: QRC(QQ音乐), LRC(网易云), KRC(酷狗)
      */
-    suspend fun getSongDetails(songInfo: SongInfo): Pair<Lyrics, String> = withContext(Dispatchers.IO) {
-        val lyricsType = when (songInfo.source) {
-            Source.QM -> "QRC"
-            Source.NE -> "LRC"
-            Source.KG -> "KRC"
+    suspend fun getSongDetails(songInfo: SongInfo): Pair<Lyrics, String> =
+        withContext(Dispatchers.IO) {
+            val lyricsType = when (songInfo.source) {
+                Source.QM -> "QRC"
+                Source.NE -> "LRC"
+                Source.KG -> "KRC"
+            }
+            Pair(getLyrics(songInfo), lyricsType)
         }
-        Pair(getLyrics(songInfo), lyricsType)
-    }
 
     /**
      * 多平台并行搜索
@@ -178,7 +195,11 @@ class LyricsApiServiceImpl : LyricsApiService {
                         source to result.results
                     } catch (e: Exception) {
                         // 单个平台搜索失败不影响其他平台
-                        Log.e("LyricsApiService", "Search failed for source $source: ${e.message}", e)
+                        Log.e(
+                            "LyricsApiService",
+                            "Search failed for source $source: ${e.message}",
+                            e
+                        )
                         null
                     }
                 }
@@ -211,7 +232,10 @@ class LyricsApiServiceImpl : LyricsApiService {
                 }
             }
 
-            Log.d("LyricsApiService", "Multi-search results: ${interleavedResults.size} items from ${validSources.size} sources")
+            Log.d(
+                "LyricsApiService",
+                "Multi-search results: ${interleavedResults.size} items from ${validSources.size} sources"
+            )
             APIResultList(interleavedResults)
         }
     }

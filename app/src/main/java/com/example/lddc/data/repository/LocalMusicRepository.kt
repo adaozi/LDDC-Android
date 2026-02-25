@@ -34,7 +34,10 @@ interface LocalMusicRepository {
     /**
      * 扫描指定目录
      */
-    fun scanDirectory(directoryPath: String, includeSubDirs: Boolean = true): Flow<Pair<LocalMusicInfo, ScanProgress>>
+    fun scanDirectory(
+        directoryPath: String,
+        includeSubDirs: Boolean = true
+    ): Flow<Pair<LocalMusicInfo, ScanProgress>>
 
     /**
      * 并行扫描指定目录
