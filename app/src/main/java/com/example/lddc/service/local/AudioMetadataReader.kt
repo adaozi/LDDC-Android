@@ -54,7 +54,7 @@ object AudioMetadataReader {
                 "3g2" -> readMP4Metadata(file)  // 3GPP2 使用类似 MP4 的格式
                 "dff", "dsf" -> readDSDMetadata(file)  // DSD 格式
                 "mid" -> readMIDIMetadata(file)  // MIDI
-                "ofr", "ofs" -> readOptimFROGMetadata(file)  // OptimFROG
+                "ofr", "ofs" -> readOptimFROGMetadata()  // OptimFROG
                 "spx" -> readOGGMetadata(file)  // Speex 使用 OGG 容器
                 "tak" -> readTAKMetadata(file)  // TAK 无损音频
                 else -> ExtendedMetadata()
@@ -929,7 +929,7 @@ object AudioMetadataReader {
     /**
      * 读取 OptimFROG 文件元数据
      */
-    private fun readOptimFROGMetadata(file: File): ExtendedMetadata {
+    private fun readOptimFROGMetadata(): ExtendedMetadata {
         return try {
             // OptimFROG 使用 APEv2 标签
             parseAPEv2Tag()

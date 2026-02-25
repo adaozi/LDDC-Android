@@ -286,7 +286,6 @@ fun LocalMusicListScreen(
                             } else {
                                 MusicListContent(
                                     musicList = displayedMusicList,
-                                    matchResults = matchResults,
                                     matchProgress = matchProgress,
                                     onMusicClick = onMusicSelected,
                                     isLandscape = isLandscape
@@ -327,7 +326,6 @@ fun LocalMusicListScreen(
                                 } else {
                                     MusicListContent(
                                         musicList = displayedMusicList,
-                                        matchResults = matchResults,
                                         matchProgress = matchProgress,
                                         onMusicClick = onMusicSelected,
                                         isLandscape = isLandscape
@@ -622,7 +620,6 @@ private fun FolderMusicSplitView(
             } else {
                 MusicListContent(
                     musicList = displayedMusicList,
-                    matchResults = matchResults,
                     matchProgress = matchProgress,
                     onMusicClick = onMusicClick,
                     isLandscape = true
@@ -845,7 +842,6 @@ private fun ScanningState(progress: com.example.lddc.model.ScanProgress) {
 @Composable
 private fun MusicListContent(
     musicList: List<LocalMusicInfo>,
-    matchResults: List<LocalMusicMatchResult>,
     matchProgress: com.example.lddc.model.MatchProgress,
     onMusicClick: (LocalMusicInfo) -> Unit,
     isLandscape: Boolean = false
