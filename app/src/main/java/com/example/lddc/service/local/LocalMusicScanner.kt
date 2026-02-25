@@ -896,7 +896,7 @@ class LocalMusicScanner(private val context: Context) {
                 hasLyrics = hasLyrics,
                 lyricsPath = lyricsPath
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // 如果读取元数据失败，使用文件名作为标题
             LocalMusicInfo(
                 id = file.absolutePath.hashCode().toLong(),
@@ -926,7 +926,7 @@ class LocalMusicScanner(private val context: Context) {
             // METADATA_KEY_HAS_LYRICS 在 API 10 才添加，使用字符串值 "yes" 来判断
             val hasLyrics = retriever.extractMetadata(22) // METADATA_KEY_HAS_LYRICS = 22
             hasLyrics == "yes"
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         } finally {
             retriever.release()
@@ -969,7 +969,7 @@ class LocalMusicScanner(private val context: Context) {
             // 检查 URI 是否有效
             context.contentResolver.openInputStream(albumArtUri)?.close()
             albumArtUri
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // 如果没有专辑封面，尝试从文件元数据中获取
             null
         }

@@ -114,9 +114,6 @@ object CharsetDetector {
                 if ((bytes[i + 2].toInt() and 0xC0) != 0x80) return false
 
                 // 检查是否是中文字符范围
-                val codePoint = ((b and 0x0F) shl 12) or
-                        ((bytes[i + 1].toInt() and 0x3F) shl 6) or
-                        (bytes[i + 2].toInt() and 0x3F)
 
                 // 中文字符范围：0x4E00-0x9FA5 (CJK Unified Ideographs)
                 // 中文标点：0x3000-0x303F

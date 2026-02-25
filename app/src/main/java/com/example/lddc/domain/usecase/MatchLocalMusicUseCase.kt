@@ -209,7 +209,7 @@ class MatchLocalMusicUseCase(
         val semaphore = kotlinx.coroutines.sync.Semaphore(threadCount)
 
         coroutineScope {
-            musicList.mapIndexed { index, music ->
+            musicList.mapIndexed { _, music ->
                 async(Dispatchers.IO) {
                     semaphore.acquire()
                     try {

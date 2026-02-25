@@ -207,7 +207,7 @@ class JAudioTaggerLyricsReader {
                     Log.d(TAG, "从 WAV INFO 读取到可能的歌词")
                     return lyrics
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 忽略
             }
         }
@@ -227,44 +227,9 @@ class JAudioTaggerLyricsReader {
                 return lyrics
             }
             null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
 
-    /**
-     * 检查是否为有效的 UTF-8
-     */
-    private fun isValidUTF8(data: ByteArray): Boolean {
-        var i = 0
-        while (i < data.size) {
-            val b = data[i].toInt() and 0xFF
-            when {
-                b < 0x80 -> i++
-                b in 0xC0..0xDF -> {
-                    if (i + 1 >= data.size) return false
-                    if ((data[i + 1].toInt() and 0xC0) != 0x80) return false
-                    i += 2
-                }
-
-                b in 0xE0..0xEF -> {
-                    if (i + 2 >= data.size) return false
-                    if ((data[i + 1].toInt() and 0xC0) != 0x80) return false
-                    if ((data[i + 2].toInt() and 0xC0) != 0x80) return false
-                    i += 3
-                }
-
-                b in 0xF0..0xF7 -> {
-                    if (i + 3 >= data.size) return false
-                    if ((data[i + 1].toInt() and 0xC0) != 0x80) return false
-                    if ((data[i + 2].toInt() and 0xC0) != 0x80) return false
-                    if ((data[i + 3].toInt() and 0xC0) != 0x80) return false
-                    i += 4
-                }
-
-                else -> return false
-            }
-        }
-        return true
-    }
 }

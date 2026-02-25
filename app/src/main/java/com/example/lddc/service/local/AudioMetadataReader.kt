@@ -291,7 +291,7 @@ object AudioMetadataReader {
                 if (score >= 95) {
                     return result
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 继续尝试下一个
             }
         }
@@ -531,7 +531,7 @@ object AudioMetadataReader {
             // 有 BOM，使用标准 UTF-16 解码
             try {
                 String(data, Charsets.UTF_16).trim { it == '\u0000' }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 autoDecode(data)
             }
         } else {
@@ -550,7 +550,7 @@ object AudioMetadataReader {
             if (!containsGarbledChars(result)) {
                 return result
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // 继续尝试其他编码
         }
 
@@ -595,7 +595,7 @@ object AudioMetadataReader {
                 if (score >= 95) {
                     return result
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 继续尝试下一个
             }
         }
@@ -931,7 +931,6 @@ object AudioMetadataReader {
      */
     private fun readOptimFROGMetadata(file: File): ExtendedMetadata {
         return try {
-            val data = file.readBytes()
             // OptimFROG 使用 APEv2 标签
             parseAPEv2Tag()
         } catch (e: Exception) {

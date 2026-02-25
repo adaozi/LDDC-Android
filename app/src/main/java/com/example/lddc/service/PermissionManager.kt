@@ -43,7 +43,7 @@ object PermissionManager {
      * 检查是否有管理所有文件的权限（Android 11+）
      * 注意：这个权限需要特殊申请，一般不建议使用
      */
-    fun hasManageExternalStoragePermission(context: Context): Boolean {
+    fun hasManageExternalStoragePermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Environment.isExternalStorageManager()
         } else {
@@ -72,11 +72,5 @@ object PermissionManager {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
     }
 
-}
-
-/**
- * 权限请求状态
- */
-sealed class PermissionState {
 }
 

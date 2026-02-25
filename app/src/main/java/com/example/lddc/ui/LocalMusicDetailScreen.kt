@@ -117,8 +117,8 @@ fun LocalMusicDetailScreen(
 
     // 格式化时长（duration 是毫秒字符串，需要转换为 Long）
     val durationMs = try {
-        music.duration.toLong()
-    } catch (e: NumberFormatException) {
+        music.duration
+    } catch (_: NumberFormatException) {
         0L
     }
     val formattedDuration = formatDuration(durationMs)
@@ -177,7 +177,7 @@ fun LocalMusicDetailScreen(
                         if (selectedMusic != null) {
                             // 检查是否需要管理外部存储权限
                             if (PermissionManager.needsManageExternalStoragePermission() &&
-                                !PermissionManager.hasManageExternalStoragePermission(context)
+                                !PermissionManager.hasManageExternalStoragePermission()
                             ) {
                                 // 显示权限引导
                                 showManageStorageDialog = true
@@ -211,7 +211,7 @@ fun LocalMusicDetailScreen(
                         if (selectedMusic != null) {
                             // 检查是否需要管理外部存储权限
                             if (PermissionManager.needsManageExternalStoragePermission() &&
-                                !PermissionManager.hasManageExternalStoragePermission(context)
+                                !PermissionManager.hasManageExternalStoragePermission()
                             ) {
                                 // 显示权限引导
                                 showManageStorageDialog = true

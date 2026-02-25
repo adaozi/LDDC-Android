@@ -192,7 +192,7 @@ class LocalMatchViewModel(application: Application) : AndroidViewModel(applicati
             if (savedViewMode != null) {
                 try {
                     _viewMode.value = ViewMode.valueOf(savedViewMode)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     Log.w(TAG, "读取保存的视图模式失败: $savedViewMode")
                 }
             }

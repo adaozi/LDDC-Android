@@ -308,8 +308,7 @@ fun LocalMusicListScreen(
                                     onFolderClick = { folder ->
                                         viewModel.selectFolder(folder)
                                     },
-                                    onMusicClick = onMusicSelected,
-                                    onStartMatch = { viewModel.showSaveModeDialog(displayedMusicList) }
+                                    onMusicClick = onMusicSelected
                                 )
                             } else if (selectedFolder == null) {
                                 // 竖屏：显示文件夹列表
@@ -513,8 +512,7 @@ private fun FolderMusicSplitView(
     matchResults: List<LocalMusicMatchResult>,
     matchProgress: com.example.lddc.model.MatchProgress,
     onFolderClick: (String) -> Unit,
-    onMusicClick: (LocalMusicInfo) -> Unit,
-    onStartMatch: () -> Unit
+    onMusicClick: (LocalMusicInfo) -> Unit
 ) {
     Row(modifier = Modifier.fillMaxSize()) {
         // 左侧文件夹列表
@@ -883,7 +881,6 @@ private fun MusicListContent(
                 verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Medium)
             ) {
                 items(musicList) { music ->
-                    val matchResult = matchResults.find { it.localMusic.id == music.id }
                     LocalMusicGridItem(
                         music = music,
                         onClick = { onMusicClick(music) }
@@ -902,7 +899,6 @@ private fun MusicListContent(
                 verticalArrangement = Arrangement.spacedBy(UiConstants.Spacing.Small)
             ) {
                 items(musicList) { music ->
-                    val matchResult = matchResults.find { it.localMusic.id == music.id }
                     LocalMusicListItem(
                         music = music,
                         onClick = { onMusicClick(music) }

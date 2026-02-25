@@ -143,7 +143,7 @@ class JAudioTaggerMetadataReader {
                         Log.d(TAG, "找到可能的图片字段: $fieldName")
                         // 这里可能需要特殊处理，因为字段可能包含二进制数据
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // 忽略
                 }
             }

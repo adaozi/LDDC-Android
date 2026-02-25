@@ -486,7 +486,7 @@ class LocalLyricsWriter(private val context: Context) {
                     Log.d(TAG, "使用编码 ${charset.name()} 完美读取文件: ${file.name}")
                     return content
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 继续尝试下一个编码
             }
         }
@@ -555,7 +555,7 @@ class LocalLyricsWriter(private val context: Context) {
 
         // 8. 检查时间戳格式（如果是 LRC 歌词）
         if (content.contains("[") && content.contains("]")) {
-            val timestampPattern = "\\[\\d{2}:\\d{2}\\.\\d{2,3}\\]".toRegex()
+            val timestampPattern = "\\[\\d{2}:\\d{2}\\.\\d{2,3}]".toRegex()
             val timestampCount = timestampPattern.findAll(content).count()
             if (timestampCount > 0) {
                 score += 10  // 奖励包含时间戳的
@@ -715,7 +715,7 @@ class LocalLyricsWriter(private val context: Context) {
                     return isoResult
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // 继续尝试其他编码
         }
 
@@ -743,7 +743,7 @@ class LocalLyricsWriter(private val context: Context) {
                     Log.d(TAG, "使用 $charset 成功解码 ISO-8859-1 标记的中文内容")
                     return result
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 继续尝试下一个编码
             }
         }
@@ -751,7 +751,7 @@ class LocalLyricsWriter(private val context: Context) {
         // 返回最佳中文编码结果，如果没有则回退到 ISO-8859-1
         return bestResult ?: try {
             String(data, Charsets.ISO_8859_1).trim { it == '\u0000' }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -770,7 +770,7 @@ class LocalLyricsWriter(private val context: Context) {
             // 有 BOM，使用标准 UTF-16 解码
             try {
                 String(data, Charsets.UTF_16).trim { it == '\u0000' }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 autoDecode(data)
             }
         } else {
@@ -789,7 +789,7 @@ class LocalLyricsWriter(private val context: Context) {
             if (!containsGarbledChars(result)) {
                 return result
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // 继续尝试其他编码
         }
 
@@ -834,7 +834,7 @@ class LocalLyricsWriter(private val context: Context) {
                 if (score >= 95) {
                     return result
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 继续尝试下一个
             }
         }

@@ -309,7 +309,6 @@ class NetEaseApi(private val httpClient: HttpClient) {
         val data = request("/eapi/search/song/list/page", params)
         val jsonData = data as? Map<String, Any> ?: emptyMap()
 
-        offset
 
         val resources = (jsonData["data"] as? Map<String, Any>)?.get("resources") as? List<Any>
             ?: emptyList()
