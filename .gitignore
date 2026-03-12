@@ -27,8 +27,6 @@ proguard/
 
 # Android Studio
 .idea/
-.gradle/
-local.properties
 *.iml
 *.hprof
 .cxx/
@@ -65,16 +63,12 @@ coverage/
 *.rst
 
 # IDE specific
-.idea/
-.vscode/
 *.sublime-*
 *.swp
 *.swo
 *~
 
 # OS generated files
-Thumbs.db
-.DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
@@ -83,13 +77,10 @@ ehthumbs.db
 
 # Build outputs
 app/build/
-build/
 
 # Gradle
-.gradle/
 
 # Local config
-local.properties
 
 # Generated files
 app/generated/
@@ -98,25 +89,19 @@ app/src/main/java/com/example/lddc/R.java
 
 # Logs
 logs
-*.log
 
 # Temporary files
-*.tmp
-*.temp
 
 # Backup files
 *.bak
 *.backup
 
 # IDE files
-.idea/
-*.iml
 *.ipr
 *.iws
 
 # OS files
-Thumbs.db
-.DS_Store
 
 # LDDC specific
-LDDC-PC/
+/.kotlin/sessions/
+/app/release/
