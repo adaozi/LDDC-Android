@@ -1,50 +1,106 @@
 # LDDC-Android
 
-LDDC (Lyrics Download and Converter) Android 版 - 一款功能强大的歌词下载与转换工具
+⚠️ 注意：本项目全部代码由 AI 生成
+本项目是基于 LDDC 的 Android 版本，所有代码（包括 README 文件）均由 AI 助手生成，不包含任何人工编写的代码。
 
-## 项目简介
+一个支持多平台的精准歌词（逐字歌词）下载匹配工具 Android 版。
 
-LDDC-Android 是一款专为 Android 平台设计的歌词下载与转换工具，支持从多个音乐平台获取歌词，并提供多种格式的歌词转换功能。
+## 主要特性
 
-## 功能特性
+⚡ 多线程快速匹配：所有歌词匹配功能均采用多线程技术，实现自动搜索与极速精准匹配每一个歌词。
+📝 逐字歌词样式：绝大多数歌曲都能获取到逐字样式的歌词，精准同步到每个字。
+💾 多种格式支持：支持保存歌词为逐字 LRC、逐行 LRC、增强型 LRC、SRT 和 ASS 等格式。
+🎵 多音乐平台歌词搜索：支持搜索 QQ音乐、酷狗音乐、网易云音乐中的单曲。
+🎯 本地歌词匹配：一键为本地歌曲文件精准匹配歌词，采用多线程匹配提高匹配速度。
+👀 歌词预览与保存：支持预览歌词，支持保存为歌词文件或直接嵌入歌曲文件。
+🛠️ 多样歌词组合：灵活组合原文、译文、罗马音的歌词内容。
+🔧 加密歌词支持：支持解析 QQ音乐(QRC)、酷狗音乐(KRC)、网易云音乐(YRC) 等加密歌词格式。
+🔓 本地音乐扫描：多线程扫描本地音乐文件，支持按拼音/字母排序。
 
-### 核心功能
-- 🎵 **多平台歌词搜索**：支持从网易云音乐、QQ音乐、酷狗音乐搜索歌词
-- 📱 **自适应UI**：根据系统主题自动调整界面颜色
-- 🎨 **现代设计**：基于 Material Design 3 的现代界面设计
-- 🔄 **自动加载更多**：滚动到底部自动加载更多搜索结果
-- 📁 **歌词缓存**：本地缓存歌词，提高加载速度
-- 🔍 **智能搜索**：支持多线程并行搜索，提高搜索效率
+## 版本信息
 
-### 支持的歌词格式
-- LRC 格式（标准歌词格式）
-- KRC 格式（酷狗音乐歌词格式）
-- QRC 格式（QQ音乐歌词格式）
-- YRC 格式（网易云音乐歌词格式）
-
-### 支持的音乐平台
-- 网易云音乐
-- QQ音乐
-- 酷狗音乐
+| 项目 | 值 |
+| --- | --- |
+| 版本号 | 1.01 (versionCode: 2) |
+| 最低 Android 版本 | Android 7.0 (API 24) |
+| 目标 Android 版本 | Android 15 (API 36) |
 
 ## 技术栈
 
-- **开发语言**：Kotlin
-- **UI框架**：Jetpack Compose
-- **依赖注入**：Hilt
-- **数据库**：Room
-- **网络请求**：OkHttp
-- **协程**：Kotlin Coroutines
-- **序列化**：Kotlinx Serialization
+- 语言：Kotlin
+- UI 框架：Jetpack Compose
+- 架构：MVVM
+- 网络：Ktor
+- 异步：Kotlin Coroutines + Flow
+- 依赖注入：手动依赖注入
+
+## 项目结构
+
+```
+app/src/main/java/com/example/lddc/
+├── MainActivity.kt              # 主入口
+├── model/                       # 数据模型
+│   ├── Music.kt                 # 歌曲信息
+│   ├── Lyrics.kt                # 歌词数据模型
+│   └── LocalMusicInfo.kt        # 本地音乐相关模型
+├── viewmodel/                   # ViewModel
+│   ├── MusicViewModel.kt        # 音乐搜索 ViewModel
+│   └── LocalMatchViewModel.kt   # 本地音乐匹配 ViewModel
+├── service/                     # 业务逻辑层
+│   ├── LyricsService.kt         # 歌词转换服务
+│   ├── MusicFilterService.kt    # 音乐筛选服务
+│   ├── PlatformService.kt       # 平台服务
+│   ├── api/                     # 平台 API
+│   │   ├── QQMusicApi.kt        # QQ音乐 API
+│   │   ├── NetEaseApi.kt        # 网易云音乐 API
+│   │   └── KugouApi.kt          # 酷狗音乐 API
+│   ├── parser/                  # 歌词解析器
+│   │   ├── LrcParser.kt         # LRC 解析
+│   │   ├── QrcParser.kt         # QRC 解析 (QQ音乐)
+│   │   ├── KrcParser.kt         # KRC 解析 (酷狗音乐)
+│   │   └── YrcParser.kt         # YRC 解析 (网易云音乐)
+│   ├── converter/               # 格式转换器
+│   │   ├── LrcConverter.kt      # LRC 转换
+│   │   ├── SrtConverter.kt      # SRT 转换
+│   │   └── AssConverter.kt      # ASS 转换
+│   ├── crypto/                  # 加密解密
+│   │   ├── CryptoModule.kt
+│   │   └── QrcDecoder.kt
+│   ├── decryptor/               # 解密器
+│   │   └── KrcDecoder.kt        # KRC 解密
+│   ├── local/                   # 本地音乐处理
+│   │   ├── LocalMusicScanner.kt # 本地音乐扫描
+│   │   ├── JAudioTaggerLyricsWriter.kt  # 歌词写入
+│   │   └── JAudioTaggerMetadataReader.kt # 元数据读取
+│   └── logger/                  # 日志
+│       └── Logger.kt
+├── ui/                          # UI 层
+│   ├── SearchScreen.kt          # 搜索页面
+│   ├── ResultsScreen.kt         # 搜索结果页面
+│   ├── DetailScreen.kt          # 歌曲详情页面
+│   ├── LocalMusicListScreen.kt  # 本地音乐列表页面
+│   ├── LocalMusicSearchScreen.kt        # 本地音乐搜索页面
+│   ├── LocalMusicDetailScreen.kt        # 本地音乐详情页面
+│   ├── LocalMusicSearchDetailScreen.kt  # 本地音乐搜索结果详情页面
+│   ├── LocalMusicMatchScreen.kt         # 本地音乐匹配页面
+│   ├── LocalMusicMatchResultScreen.kt   # 本地音乐匹配结果页面
+│   ├── SettingsScreen.kt        # 设置页面
+│   └── components/              # UI 组件
+│       ├── SearchBar.kt         # 搜索栏
+│       ├── MusicItem.kt         # 音乐项
+│       ├── LyricsPreview.kt     # 歌词预览
+│       └── LoadingDialog.kt     # 加载对话框
+├── utils/                       # 工具类
+│   ├── NetworkUtils.kt          # 网络工具
+│   ├── FileUtils.kt             # 文件工具
+│   ├── StringUtils.kt           # 字符串工具
+│   └── PermissionUtils.kt       # 权限工具
+└── constant/                    # 常量
+    └── Constants.kt             # 常量定义
+```
 
 ## 安装说明
 
-### 前提条件
-- Android 7.0 (API 24) 或更高版本
-- Android Studio 2023.1.1 或更高版本
-- Kotlin 1.9.0 或更高版本
-
-### 构建步骤
 1. 克隆项目
    ```bash
    git clone https://github.com/adaozi/LDDC-Android.git
@@ -52,56 +108,26 @@ LDDC-Android 是一款专为 Android 平台设计的歌词下载与转换工具�
 
 2. 在 Android Studio 中打开项目
 
-3. 同步依赖
-   ```bash
-   ./gradlew sync
-   ```
+3. 同步依赖并构建项目
 
-4. 构建项目
-   ```bash
-   ./gradlew assembleDebug
-   ```
-
-5. 安装应用
-   ```bash
-   ./gradlew installDebug
-   ```
+4. 运行应用
 
 ## 使用方法
 
 ### 搜索歌词
-1. 在搜索框中输入歌曲名称或歌手名称
-2. 选择要搜索的音乐平台
-3. 点击搜索按钮
-4. 滚动查看搜索结果，系统会自动加载更多
-5. 点击歌曲条目查看歌词详情
+1. 在搜索页面输入歌曲名称或歌手名称
+2. 点击搜索按钮
+3. 查看搜索结果
+4. 点击歌曲进入详情页面
+5. 预览歌词并选择保存格式
 
-### 转换歌词格式
-1. 在歌词详情页面，点击转换按钮
-2. 选择目标歌词格式
-3. 等待转换完成
-4. 点击保存按钮保存转换后的歌词
-
-## 项目结构
-
-```
-LDDC-Android/
-├── app/
-│   ├── src/main/java/com/example/lddc/
-│   │   ├── common/          # 通用工具类和模型
-│   │   ├── core/            # 核心功能实现
-│   │   ├── data/            # 数据层
-│   │   ├── di/              # 依赖注入
-│   │   ├── domain/          # 领域层
-│   │   ├── presentation/    # 表现层
-│   │   ├── ui/              # UI相关代码
-│   │   ├── LDDCApplication.kt
-│   │   └── MainActivity.kt
-│   └── src/main/res/        # 资源文件
-├── build.gradle.kts          # 项目构建配置
-├── gradle/                   # Gradle配置
-└── settings.gradle.kts       # 项目设置
-```
+### 本地音乐匹配
+1. 进入本地音乐页面
+2. 扫描本地音乐文件
+3. 选择要匹配歌词的歌曲
+4. 点击匹配按钮
+5. 查看匹配结果
+6. 选择保存方式
 
 ## 贡献指南
 
@@ -131,19 +157,19 @@ LDDC-Android/
 
 ## 更新日志
 
-### v1.0.3 (2026-03-12)
+### v1.03 (2026-03-12)
 - ✨ 实现自动加载更多功能
 - 🎨 优化Logo设计，支持主题自适应
 - 📱 优化UI颜色，支持系统主题自适应
 - 🔧 修复编译错误
 - 📦 清理项目结构，移除不必要文件
 
-### v1.0.2
+### v1.02
 - 🎵 添加多平台歌词搜索
 - 🔄 实现多线程并行搜索
 - 📁 添加歌词缓存功能
 
-### v1.0.1
+### v1.01
 - 🎨 初始版本发布
 - 📱 基本UI界面
 - 🔍 基本搜索功能
