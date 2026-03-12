@@ -16,6 +16,8 @@
 🛠️ 多样歌词组合：灵活组合原文、译文、罗马音的歌词内容。
 🔧 加密歌词支持：支持解析 QQ音乐(QRC)、酷狗音乐(KRC)、网易云音乐(YRC) 等加密歌词格式。
 🔓 本地音乐扫描：多线程扫描本地音乐文件，支持按拼音/字母排序。
+📱 自适应UI：根据系统主题自动调整界面颜色。
+🔄 自动加载更多：滚动到底部自动加载更多搜索结果。
 
 ## 版本信息
 
@@ -30,74 +32,132 @@
 
 - 语言：Kotlin
 - UI 框架：Jetpack Compose
-- 架构：MVVM
-- 网络：Ktor
+- 架构：MVVM + 仓库模式 + UseCase
+- 网络：OkHttp
 - 异步：Kotlin Coroutines + Flow
-- 依赖注入：手动依赖注入
+- 依赖注入：Hilt
+- 数据库：Room
+- 图片加载：Coil
+- 序列化：Kotlinx Serialization
 
 ## 项目结构
 
 ```
 app/src/main/java/com/example/lddc/
-├── MainActivity.kt              # 主入口
-├── model/                       # 数据模型
-│   ├── Music.kt                 # 歌曲信息
-│   ├── Lyrics.kt                # 歌词数据模型
-│   └── LocalMusicInfo.kt        # 本地音乐相关模型
-├── viewmodel/                   # ViewModel
-│   ├── MusicViewModel.kt        # 音乐搜索 ViewModel
-│   └── LocalMatchViewModel.kt   # 本地音乐匹配 ViewModel
-├── service/                     # 业务逻辑层
-│   ├── LyricsService.kt         # 歌词转换服务
-│   ├── MusicFilterService.kt    # 音乐筛选服务
-│   ├── PlatformService.kt       # 平台服务
-│   ├── api/                     # 平台 API
-│   │   ├── QQMusicApi.kt        # QQ音乐 API
-│   │   ├── NetEaseApi.kt        # 网易云音乐 API
-│   │   └── KugouApi.kt          # 酷狗音乐 API
-│   ├── parser/                  # 歌词解析器
-│   │   ├── LrcParser.kt         # LRC 解析
-│   │   ├── QrcParser.kt         # QRC 解析 (QQ音乐)
-│   │   ├── KrcParser.kt         # KRC 解析 (酷狗音乐)
-│   │   └── YrcParser.kt         # YRC 解析 (网易云音乐)
-│   ├── converter/               # 格式转换器
-│   │   ├── LrcConverter.kt      # LRC 转换
-│   │   ├── SrtConverter.kt      # SRT 转换
-│   │   └── AssConverter.kt      # ASS 转换
-│   ├── crypto/                  # 加密解密
-│   │   ├── CryptoModule.kt
-│   │   └── QrcDecoder.kt
+├── LDDCApplication.kt          # 应用入口
+├── MainActivity.kt              # 主Activity
+├── common/                      # 通用模块
+│   ├── models/                  # 数据模型
+│   │   ├── enums/               # 枚举类
+│   │   │   ├── Language.kt      # 语言
+│   │   │   ├── LyricsFormat.kt  # 歌词格式
+│   │   │   ├── LyricsType.kt    # 歌词类型
+│   │   │   ├── SearchType.kt    # 搜索类型
+│   │   │   └── Source.kt        # 音乐平台
+│   │   ├── info/                # 信息模型
+│   │   │   ├── AlbumInfo.kt     # 专辑信息
+│   │   │   ├── Artist.kt        # 艺术家信息
+│   │   │   ├── LyricInfo.kt     # 歌词信息
+│   │   │   ├── PlaylistInfo.kt  # 播放列表信息
+│   │   │   └── SongInfo.kt      # 歌曲信息
+│   │   └── lyrics/              # 歌词模型
+│   │       ├── Lyrics.kt        # 歌词数据
+│   │       ├── LyricsLine.kt    # 歌词行
+│   │       └── LyricsWord.kt    # 歌词字
+│   └── utils/                   # 工具类
+│       ├── AlbumArtLoader.kt    # 专辑封面加载
+│       ├── PermissionUtils.kt   # 权限工具
+│       └── TextUtils.kt         # 文本工具
+├── core/                        # 核心功能
+│   ├── api/                     # API实现
+│   │   ├── base/                # 基础API
+│   │   │   └── BaseLyricsApi.kt # 基础歌词API
+│   │   ├── impl/                # 具体实现
+│   │   │   ├── KugouApi.kt      # 酷狗音乐API
+│   │   │   ├── NetEaseApi.kt    # 网易云音乐API
+│   │   │   └── QQMusicApi.kt    # QQ音乐API
+│   │   ├── LyricsApiManager.kt  # API管理器
+│   │   └── NetEaseDeviceIds.kt  # 网易云设备ID
 │   ├── decryptor/               # 解密器
-│   │   └── KrcDecoder.kt        # KRC 解密
-│   ├── local/                   # 本地音乐处理
-│   │   ├── LocalMusicScanner.kt # 本地音乐扫描
-│   │   ├── JAudioTaggerLyricsWriter.kt  # 歌词写入
-│   │   └── JAudioTaggerMetadataReader.kt # 元数据读取
-│   └── logger/                  # 日志
-│       └── Logger.kt
-├── ui/                          # UI 层
-│   ├── SearchScreen.kt          # 搜索页面
-│   ├── ResultsScreen.kt         # 搜索结果页面
-│   ├── DetailScreen.kt          # 歌曲详情页面
-│   ├── LocalMusicListScreen.kt  # 本地音乐列表页面
-│   ├── LocalMusicSearchScreen.kt        # 本地音乐搜索页面
-│   ├── LocalMusicDetailScreen.kt        # 本地音乐详情页面
-│   ├── LocalMusicSearchDetailScreen.kt  # 本地音乐搜索结果详情页面
-│   ├── LocalMusicMatchScreen.kt         # 本地音乐匹配页面
-│   ├── LocalMusicMatchResultScreen.kt   # 本地音乐匹配结果页面
-│   ├── SettingsScreen.kt        # 设置页面
-│   └── components/              # UI 组件
-│       ├── SearchBar.kt         # 搜索栏
-│       ├── MusicItem.kt         # 音乐项
-│       ├── LyricsPreview.kt     # 歌词预览
-│       └── LoadingDialog.kt     # 加载对话框
-├── utils/                       # 工具类
-│   ├── NetworkUtils.kt          # 网络工具
-│   ├── FileUtils.kt             # 文件工具
-│   ├── StringUtils.kt           # 字符串工具
-│   └── PermissionUtils.kt       # 权限工具
-└── constant/                    # 常量
-    └── Constants.kt             # 常量定义
+│   │   ├── EapiDecryptor.kt     # EAPI解密
+│   │   ├── KrcDecryptor.kt      # KRC解密
+│   │   └── QrcDecryptor.kt      # QRC解密
+│   └── parser/                  # 解析器
+│       ├── KrcParser.kt         # KRC解析
+│       ├── LrcParser.kt         # LRC解析
+│       ├── LyricsParser.kt      # 歌词解析基类
+│       ├── QrcParser.kt         # QRC解析
+│       └── YrcParser.kt         # YRC解析
+├── data/                        # 数据层
+│   ├── local/                   # 本地数据
+│   │   ├── database/            # 数据库
+│   │   │   ├── dao/             # DAO
+│   │   │   │   ├── LyricsCacheDao.kt      # 歌词缓存DAO
+│   │   │   │   └── SearchHistoryDao.kt    # 搜索历史DAO
+│   │   │   ├── entity/          # 实体类
+│   │   │   │   ├── LyricsCacheEntity.kt   # 歌词缓存实体
+│   │   │   │   └── SearchHistoryEntity.kt # 搜索历史实体
+│   │   │   └── LDDCDatabase.kt  # 数据库
+│   │   └── datastore/           # 数据存储
+│   │       └── SettingsDataStore.kt # 设置数据存储
+│   └── repository/              # 仓库
+│       ├── LyricsRepository.kt      # 歌词仓库
+│       ├── SearchHistoryRepository.kt # 搜索历史仓库
+│       └── SettingsRepository.kt    # 设置仓库
+├── di/                          # 依赖注入
+│   └── AppModule.kt             # 应用模块
+├── domain/                      # 领域层
+│   ├── convert/                 # 转换
+│   │   └── ConvertLyricsUseCase.kt # 转换歌词用例
+│   ├── search/                  # 搜索
+│   │   ├── ClearSearchHistoryUseCase.kt  # 清除搜索历史用例
+│   │   ├── GetLyricsUseCase.kt          # 获取歌词用例
+│   │   ├── GetSearchHistoryUseCase.kt   # 获取搜索历史用例
+│   │   └── SearchSongsUseCase.kt        # 搜索歌曲用例
+│   └── settings/                # 设置
+│       ├── GetSettingsUseCase.kt       # 获取设置用例
+│       └── UpdateSettingsUseCase.kt    # 更新设置用例
+├── presentation/                # 表现层
+│   ├── components/              # 组件
+│   │   ├── common/              # 通用组件
+│   │   │   ├── EmptyState.kt    # 空状态
+│   │   │   ├── ErrorMessage.kt  # 错误信息
+│   │   │   └── LoadingIndicator.kt # 加载指示器
+│   │   ├── designsystem/        # 设计系统
+│   │   │   ├── LDDCButton.kt    # 按钮
+│   │   │   ├── LDDCCard.kt      # 卡片
+│   │   │   ├── LDDCChip.kt      # 芯片
+│   │   │   ├── LDDCInput.kt     # 输入框
+│   │   │   ├── LDDCListItem.kt  # 列表项
+│   │   │   └── LDDCState.kt     # 状态组件
+│   │   ├── music/               # 音乐组件
+│   │   │   ├── LocalMusicListItem.kt # 本地音乐列表项
+│   │   │   └── SongListItem.kt  # 歌曲列表项
+│   │   └── search/              # 搜索组件
+│   │       └── SourceChip.kt    # 来源芯片
+│   ├── screens/                 # 页面
+│   │   ├── search/              # 搜索页面
+│   │   │   ├── FilterDialog.kt  # 筛选对话框
+│   │   │   ├── LyricsDetailScreen.kt # 歌词详情页面
+│   │   │   ├── LyricsDetailViewModel.kt # 歌词详情ViewModel
+│   │   │   ├── SearchFilters.kt # 搜索筛选
+│   │   │   ├── SearchScreen.kt  # 搜索页面
+│   │   │   └── SearchViewModel.kt # 搜索ViewModel
+│   │   └── settings/            # 设置页面
+│   │       ├── SettingsScreen.kt # 设置页面
+│   │       └── SettingsViewModel.kt # 设置ViewModel
+│   ├── theme/                   # 主题
+│   │   ├── Color.kt             # 颜色
+│   │   ├── Shape.kt             # 形状
+│   │   ├── Theme.kt             # 主题
+│   │   └── Type.kt              # 类型
+│   └── viewmodel/               # ViewModel
+│       └── BaseViewModel.kt     # 基础ViewModel
+└── ui/                          # UI
+    └── theme/                   # UI主题
+        ├── Color.kt             # 颜色
+        ├── Theme.kt             # 主题
+        └── Type.kt              # 类型
 ```
 
 ## 安装说明
@@ -118,7 +178,7 @@ app/src/main/java/com/example/lddc/
 ### 搜索歌词
 1. 在搜索页面输入歌曲名称或歌手名称
 2. 点击搜索按钮
-3. 查看搜索结果
+3. 查看搜索结果，滚动到底部会自动加载更多
 4. 点击歌曲进入详情页面
 5. 预览歌词并选择保存格式
 
