@@ -61,7 +61,7 @@ coverage/
 .github/workflows/
 
 # Documentation
-*.md
+# *.md - 保留README.md
 *.rst
 
 # IDE specific
