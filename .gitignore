@@ -105,3 +105,5 @@ logs
 # LDDC specific
 /.kotlin/sessions/
 /app/release/
+/app/mapping.txt
+/app/usage.txt
