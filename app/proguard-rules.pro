@@ -20,139 +20,202 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Jetpack Compose
+# ==================== 基础配置 ====================
+
+# 保留注解
+-keepattributes *Annotation*
+
+# 保留签名
+-keepattributes Signature
+
+# 保留异常
+-keepattributes Exceptions
+
+# 保留内部类
+-keepattributes InnerClasses
+
+# 保留封闭方法
+-keepattributes EnclosingMethod
+
+# 保留泛型信息
+-keepattributes Signature
+
+# 保留运行时可见注解
+-keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations
+
+# 移除 Kotlin 元数据警告
+-dontwarn kotlin.Metadata
+
+# ==================== 日志优化（Release 包移除日志）====================
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int i(...);
+    public static int w(...);
+    public static int d(...);
+    public static int e(...);
+}
+
+# ==================== Jetpack Compose ====================
 -dontwarn androidx.compose.**
 -keep class androidx.compose.** { *; }
 -keep class com.example.lddc.presentation.theme.** { *; }
 -keep class com.example.lddc.ui.theme.** { *; }
 
-# Hilt
+# ==================== Hilt ====================
 -keep class dagger.hilt.** { *; }
 -keep class com.example.lddc.di.** { *; }
+-keep class * extends dagger.hilt.android.HiltApplication
+-keep class * extends dagger.hilt.android.lifecycle.HiltViewModel
 
-# Room
+# ==================== Room ====================
 -keep class com.example.lddc.data.local.database.** { *; }
 -keep class * extends androidx.room.RoomDatabase
 -keep class * implements androidx.room.Dao
+-dontwarn androidx.room.paging.**
 
-# DataStore
+# ==================== DataStore ====================
 -keep class com.example.lddc.data.local.datastore.** { *; }
 
-# Ktor
+# ==================== Ktor ====================
 -dontwarn io.ktor.**
 -keep class io.ktor.** { *; }
+-keepclassmembers class io.ktor.** { *; }
 
-# Serialization
+# ==================== Serialization ====================
 -keep class kotlinx.serialization.** { *; }
 -keep class com.example.lddc.common.models.** { *; }
+-keepclassmembers class com.example.lddc.common.models.** { *; }
 
-# Coroutines
+# ==================== Coroutines ====================
 -keep class kotlinx.coroutines.** { *; }
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
 
-# Audio Tagging
+# ==================== Audio Tagging ====================
 -keep class org.jaudiotagger.** { *; }
 
-# Coil
+# ==================== Coil ====================
 -keep class coil.** { *; }
 
-# WorkManager
+# ==================== WorkManager ====================
 -keep class androidx.work.** { *; }
 
-# Navigation
+# ==================== Navigation ====================
 -keep class androidx.navigation.** { *; }
 
-# Keep all model classes
--keep class com.example.lddc.common.models.** { *; }
+# ==================== 项目特定类 ====================
 
-# Keep all repository classes
+# 保留所有模型类
+-keep class com.example.lddc.common.models.** { *; }
+-keepclassmembers class com.example.lddc.common.models.** { *; }
+
+# 保留所有仓库类
 -keep class com.example.lddc.data.repository.** { *; }
 
-# Keep all use case classes
+# 保留所有用例类
 -keep class com.example.lddc.domain.** { *; }
 
-# Keep all ViewModel classes
+# 保留所有 ViewModel 类
 -keep class com.example.lddc.presentation.viewmodel.** { *; }
 -keep class com.example.lddc.presentation.screens.**.*ViewModel { *; }
 
-# Keep all components
+# 保留所有组件
 -keep class com.example.lddc.presentation.components.** { *; }
 
-# Keep all screens
+# 保留所有页面
 -keep class com.example.lddc.presentation.screens.** { *; }
 
-# Keep all utility classes
+# 保留所有工具类
 -keep class com.example.lddc.common.utils.** { *; }
 
-# Keep all API classes
+# 保留所有 API 类
 -keep class com.example.lddc.core.api.** { *; }
 
-# Keep all decryptor classes
+# 保留所有解密器类
 -keep class com.example.lddc.core.decryptor.** { *; }
 
-# Keep all parser classes
+# 保留所有解析器类
 -keep class com.example.lddc.core.parser.** { *; }
 
-# Keep all enums
+# 保留所有枚举
 -keep enum com.example.lddc.common.models.enums.** { *; }
 
-# Keep all annotation classes
--keepattributes *Annotation*
+# ==================== Kotlin 特定 ====================
 
-# Keep all kotlin metadata
--keepattributes Signature
--keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations
+# 保留 Kotlin 伴生对象
+-keepclassmembers class **$Companion {
+    <fields>;
+    <methods>;
+}
 
-# Keep all Kotlin classes
--keep class **$Companion { *; }
--keepclassmembers class **$Companion { *; }
+# 保留 Kotlin 数据类
+-keepclassmembers class * extends kotlin.jvm.internal.GeneratedByKotlinCompiler {
+    <init>();
+}
 
-# Keep all Kotlin data classes
--keep class * extends java.lang.Object { *; }
-
-# Keep all Kotlin functions
+# 保留 Kotlin 元数据
 -keepclassmembers class * {
     @kotlin.Metadata public *;
 }
 
-# Keep all AndroidX classes
+# ==================== AndroidX ====================
 -keep class androidx.** { *; }
 
-# Keep all Google Play Services classes
+# ==================== Google Play Services ====================
 -keep class com.google.** { *; }
 
-# Keep all OkHttp classes
+# ==================== OkHttp ====================
 -keep class okhttp3.** { *; }
 -keep class okio.** { *; }
 
-# Keep all Retrofit classes
+# ==================== 其他库 ====================
 -keep class retrofit2.** { *; }
-
-# Keep all Gson classes
 -keep class com.google.gson.** { *; }
-
-# Keep all Jackson classes
 -keep class com.fasterxml.jackson.** { *; }
-
-# Keep all Log classes
 -keep class android.util.Log { *; }
 
-# Keep all BuildConfig classes
+# ==================== BuildConfig 和 R 类 ====================
 -keep class com.example.lddc.BuildConfig { *; }
-
-# Keep all R classes
 -keep class com.example.lddc.R { *; }
+-keep class com.example.lddc.R$* { *; }
 
-# Optimize code
+# ==================== 优化配置 ====================
+
+# 代码优化
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
 
-# Print mapping file
+# 混淆代码
+-obfuscate
+
+# 打印映射文件
 -printmapping mapping.txt
 
-# Print usage
+# 打印使用情况
 -printusage usage.txt
 
-# Don't warn about missing classes
+# 不警告缺失的类
 -dontwarn **
 
-# Don't note about missing classes
+# 不记录缺失的类
 -dontnote **
+
+# ==================== 资源优化 ====================
+
+# 移除未使用的资源
+-shrinkresources
+
+# 优化资源
+-optimizations resource/shrinking
+
+# ==================== 其他优化 ====================
+
+# 移除未使用的代码
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-dontpreverify
+-verbose
+
+# 优化字节码
+-optimizations code/removal/simple,code/removal/variable,code/removal/exception,code/simplification/variable,code/simplification/arithmetic

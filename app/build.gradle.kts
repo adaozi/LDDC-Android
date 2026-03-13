@@ -20,6 +20,14 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // 🔥 关键：限制只打包中文和英文资源
+        resourceConfigurations += setOf("zh", "en")
+
+        // 🔥 关键：只保留主流架构
+        ndk {
+            abiFilters += setOf("arm64-v8a", "armeabi-v7a")
+        }
+
         // Room schema export
         javaCompileOptions {
             annotationProcessorOptions {
@@ -42,6 +50,20 @@ android {
             )
         }
     }
+
+    // 🔥 关键：启用 App Bundle 分包
+    bundle {
+        language {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -56,11 +78,22 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
     }
+
+    // 🔥 关键：优化打包配置
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/INDEX.LIST"
             excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+        }
+        // 🔥 关键：压缩原生库
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }
@@ -78,6 +111,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    // ❌ 移除 material-icons-extended，改用 core 版本
     implementation(libs.androidx.compose.material.icons)
 
     // Navigation
