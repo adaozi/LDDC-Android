@@ -186,9 +186,6 @@
 # 代码优化
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
 
-# 混淆代码
--obfuscate
-
 # 打印映射文件
 -printmapping mapping.txt
 
