@@ -161,7 +161,12 @@
 }
 
 # ==================== AndroidX ====================
--keep class androidx.** { *; }
+# 只保留真正需要的AndroidX类
+-keep class androidx.compose.** { *; }
+-keep class androidx.navigation.** { *; }
+-keep class androidx.work.** { *; }
+-keep class androidx.room.** { *; }
+-keep class androidx.datastore.** { *; }
 
 # ==================== Google Play Services ====================
 -keep class com.google.** { *; }
@@ -171,9 +176,10 @@
 -keep class okio.** { *; }
 
 # ==================== 其他库 ====================
--keep class retrofit2.** { *; }
--keep class com.google.gson.** { *; }
--keep class com.fasterxml.jackson.** { *; }
+# 只保留真正使用的库
+# -keep class retrofit2.** { *; }
+# -keep class com.google.gson.** { *; }
+# -keep class com.fasterxml.jackson.** { *; }
 -keep class android.util.Log { *; }
 
 # ==================== BuildConfig 和 R 类 ====================
@@ -200,8 +206,6 @@
 
 # ==================== 资源优化 ====================
 
-# 移除未使用的资源
--shrinkresources
 
 # 优化资源
 -optimizations resource/shrinking

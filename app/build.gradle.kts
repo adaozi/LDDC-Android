@@ -139,7 +139,7 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.ktor.client.logging)
+    // 移除 ktor-client-logging 以减小体积
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
