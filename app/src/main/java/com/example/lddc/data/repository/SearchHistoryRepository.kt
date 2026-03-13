@@ -42,10 +42,6 @@ class SearchHistoryRepository(
         searchHistoryDao.clearAll()
     }
 
-    suspend fun clearOldHistory(daysToKeep: Int) {
-        val cutoffTime = System.currentTimeMillis() - (daysToKeep * 24 * 60 * 60 * 1000L)
-        searchHistoryDao.deleteOlderThan(cutoffTime)
-    }
 }
 
 data class SearchHistoryItem(

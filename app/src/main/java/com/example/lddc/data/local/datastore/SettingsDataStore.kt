@@ -108,11 +108,6 @@ class SettingsDataStore(private val context: Context) {
         }
     }
 
-    suspend fun clearSettings() {
-        context.dataStore.edit { preferences ->
-            preferences.clear()
-        }
-    }
 }
 
 data class AppSettings(

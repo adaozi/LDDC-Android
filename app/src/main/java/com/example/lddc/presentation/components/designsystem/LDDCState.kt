@@ -134,21 +134,6 @@ fun LDDCEmptyState(
     }
 }
 
-/**
- * 骨架屏占位
- */
-@Composable
-fun LDDCSkeleton(
-    modifier: Modifier = Modifier,
-    shape: RoundedCornerShape = RoundedCornerShape(8.dp)
-) {
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-    )
-}
-
 enum class LoadingSize {
     Small, Medium, Large
 }

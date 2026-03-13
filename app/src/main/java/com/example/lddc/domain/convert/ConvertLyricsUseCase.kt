@@ -23,14 +23,4 @@ class ConvertLyricsUseCase {
         )
     }
 
-    fun getFormatDescription(format: LyricsFormat): String {
-        return when (format) {
-            LyricsFormat.VERBATIMLRC -> "逐字LRC格式，每字都有时间戳"
-            LyricsFormat.LINEBYLINELRC -> "逐行LRC格式，每行一个时间戳"
-            LyricsFormat.ENHANCEDLRC -> "增强LRC格式，支持逐字显示"
-            LyricsFormat.SRT -> "SRT字幕格式，适合视频使用"
-            LyricsFormat.ASS -> "ASS字幕格式，支持高级样式"
-            else -> "未知格式"
-        }
-    }
 }

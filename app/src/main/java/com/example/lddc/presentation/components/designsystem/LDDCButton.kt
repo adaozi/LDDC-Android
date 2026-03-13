@@ -146,6 +146,3 @@ enum class ButtonSize {
     Small, Medium, Large
 }
 
-enum class IconButtonSize {
-    Small, Medium, Large
-}

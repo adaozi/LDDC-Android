@@ -9,8 +9,4 @@ class ClearSearchHistoryUseCase(
         searchHistoryRepository.clearAllHistory()
     }
 
-    suspend fun deleteItem(id: Long) {
-        searchHistoryRepository.deleteSearchHistory(id)
-    }
-
 }

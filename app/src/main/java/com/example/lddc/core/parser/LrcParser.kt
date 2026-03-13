@@ -80,11 +80,4 @@ class LrcParser : LyricsParser {
         return result.second to result.third
     }
 
-    private fun formatTime(ms: Int): String {
-        val totalSeconds = ms / 1000
-        val minutes = totalSeconds / 60
-        val seconds = totalSeconds % 60
-        val centiseconds = (ms % 1000) / 10
-        return String.format("%02d:%02d.%02d", minutes, seconds, centiseconds)
-    }
 }

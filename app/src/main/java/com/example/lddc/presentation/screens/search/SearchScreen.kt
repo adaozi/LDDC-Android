@@ -17,10 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -57,7 +55,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.collect
 import coil.compose.AsyncImage
 import com.example.lddc.common.models.enums.Source
 import com.example.lddc.common.models.info.SongInfo
@@ -106,7 +103,7 @@ fun SearchScreen(
             searchFilters = uiState.filters,
             enabledSources = uiState.enabledSources,
             onFiltersChanged = viewModel::onFiltersChange,
-            onDismiss = { showFilterDialog = false }
+            onDismiss = { }
         )
     }
 
@@ -163,7 +160,7 @@ fun SearchScreen(
                 ) {
                     LDDCOutlinedButton(
                         text = "筛选",
-                        onClick = { showFilterDialog = true },
+                        onClick = { },
                         icon = Icons.Default.FilterList
                     )
                 }

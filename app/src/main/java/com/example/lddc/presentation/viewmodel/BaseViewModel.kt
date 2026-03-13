@@ -17,10 +17,6 @@ abstract class BaseViewModel : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
 
-    protected fun showLoading() {
-        _isLoading.value = true
-    }
-
     protected fun hideLoading() {
         _isLoading.value = false
     }

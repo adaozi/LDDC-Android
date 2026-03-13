@@ -48,10 +48,8 @@ class KrcParser : LyricsParser {
                     )
                 }.toList()
 
-                val finalWords = if (words.isEmpty()) {
+                val finalWords = words.ifEmpty {
                     listOf(LyricsWord(lineStart, lineEnd, lineContent))
-                } else {
-                    words
                 }
 
                 origLines.add(LyricsLine(lineStart, lineEnd, finalWords))

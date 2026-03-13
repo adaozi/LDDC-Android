@@ -14,7 +14,4 @@ class GetLyricsUseCase(
         return lyricsRepository.getLyrics(songInfo, useCache)
     }
 
-    suspend fun getFromAllSources(songInfo: SongInfo): Map<com.example.lddc.common.models.enums.Source, Result<Lyrics>> {
-        return lyricsRepository.getLyricsFromAll(songInfo)
-    }
 }

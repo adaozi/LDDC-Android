@@ -12,5 +12,4 @@ data class LyricInfo(
     val score: Int? = null,
     val path: String? = null,
     val cached: Boolean = false
-) {
-}
+)

@@ -219,6 +219,3 @@ fun LDDCSourceChip(
     }
 }
 
-enum class ChipStatus {
-    Success, Warning, Error, Info, Default
-}

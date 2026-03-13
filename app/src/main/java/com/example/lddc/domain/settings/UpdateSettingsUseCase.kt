@@ -10,7 +10,4 @@ class UpdateSettingsUseCase(
         settingsRepository.updateSettings(settings)
     }
 
-    suspend fun updateDefaultSavePath(path: String) {
-        settingsRepository.updateDefaultSavePath(path)
-    }
 }

@@ -3,5 +3,4 @@ package com.example.lddc.common.models.enums
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class Language {
-}
+enum class Language

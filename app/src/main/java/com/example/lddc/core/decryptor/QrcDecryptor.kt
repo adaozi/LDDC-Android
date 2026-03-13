@@ -99,7 +99,7 @@ object QrcDecryptor {
                 decryptedData.addAll(result.toList())
                 blockCount++
                 // 只打印前3个和最后3个块的详细日志
-                if (blockCount <= 3 || blockCount > 357) {
+                if (blockCount !in 4..357) {
                     Log.d(
                         "QrcDecryptor",
                         "Block $blockCount: input=${

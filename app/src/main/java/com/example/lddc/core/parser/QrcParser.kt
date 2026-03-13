@@ -12,8 +12,8 @@ class QrcParser : LyricsParser {
             """<Lyric_1 LyricType="1" LyricContent="(.*?)"/>""",
             RegexOption.DOT_MATCHES_ALL
         )
-        private val tagPattern = Regex("""^\[(\w+):([^\]]*)\]${'$'}""")
-        private val linePattern = Regex("""^\[(\d+),(\d+)\](.*)${'$'}""")
+        private val tagPattern = Regex("""^\[(\w+):([^\]]*)\]$""")
+        private val linePattern = Regex("""^\[(\d+),(\d+)\](.*)$""")
         private val wordPattern = Regex("""([^\(]*)\((\d+),(\d+)\)""")
     }
 
@@ -57,10 +57,8 @@ class QrcParser : LyricsParser {
                     )
                 }.toList()
 
-                val finalWords = if (words.isEmpty()) {
+                val finalWords = words.ifEmpty {
                     listOf(LyricsWord(lineStart, lineEnd, lineContent))
-                } else {
-                    words
                 }
 
                 lines.add(LyricsLine(lineStart, lineEnd, finalWords))

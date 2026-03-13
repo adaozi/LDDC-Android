@@ -295,11 +295,11 @@ class QQMusicApi : BaseLyricsApi {
         }
     }
 
-    private suspend fun searchAlbums(): List<SongInfo> {
+    private fun searchAlbums(): List<SongInfo> {
         return emptyList()
     }
 
-    private suspend fun searchPlaylists(): List<SongInfo> {
+    private fun searchPlaylists(): List<SongInfo> {
         return emptyList()
     }
 

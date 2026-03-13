@@ -8,8 +8,7 @@ import javax.crypto.spec.SecretKeySpec
 object EapiDecryptor {
 
     private const val EAPI_KEY = "e82ckenh8dichen8"
-    private const val CACHE_KEY = ")(13daqP@ssw0rd~"
-    private const val DEVICEID_XOR_KEY = "3go8&\$8*3*3h0k(2)2"
+    private const val DEVICEID_XOR_KEY = "3go8&$8*3*3h0k(2)2"
 
     fun encryptParams(path: String, params: Map<String, Any?>): String {
         // 使用紧凑JSON格式（无空格，与Python一致）

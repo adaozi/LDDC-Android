@@ -38,7 +38,6 @@ class KugouApi : BaseLyricsApi {
     companion object {
         private const val TAG = "KugouApi"
         private const val SIGNATURE_KEY = "LnT6xpN3khm36zse0QzvmgTZ3waWdRSA"
-        private const val APP_ID = "1014"
         private const val CLIENT_VER = "11070"
     }
 
@@ -153,8 +152,8 @@ class KugouApi : BaseLyricsApi {
     ): List<SongInfo> {
         return when (searchType) {
             SearchType.SONG -> searchSongs(keyword, page)
-            SearchType.ALBUM -> searchAlbums(keyword, page)
-            SearchType.SONGLIST -> searchPlaylists(keyword, page)
+            SearchType.ALBUM -> searchAlbums()
+            SearchType.SONGLIST -> searchPlaylists()
             else -> emptyList()
         }
     }
@@ -206,7 +205,7 @@ class KugouApi : BaseLyricsApi {
             var imageUrl = image.replace("{size}", "800")
             // 确保图片URL包含协议前缀
             if (imageUrl.isNotEmpty() && !imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
-                imageUrl = "http://" + imageUrl
+                imageUrl = "http://$imageUrl"
             }
             Log.d(TAG, "Kugou main API image URL: $imageUrl")
 
@@ -276,7 +275,7 @@ class KugouApi : BaseLyricsApi {
             var imageUrl = image.replace("{size}", "800")
             // 确保图片URL包含协议前缀
             if (imageUrl.isNotEmpty() && !imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
-                imageUrl = "http://" + imageUrl
+                imageUrl = "http://$imageUrl"
             }
             Log.d(TAG, "Kugou backup API image URL: $imageUrl")
 
@@ -293,11 +292,11 @@ class KugouApi : BaseLyricsApi {
         }
     }
 
-    private suspend fun searchAlbums(keyword: String, page: Int): List<SongInfo> {
+    private fun searchAlbums(): List<SongInfo> {
         return emptyList()
     }
 
-    private suspend fun searchPlaylists(keyword: String, page: Int): List<SongInfo> {
+    private fun searchPlaylists(): List<SongInfo> {
         return emptyList()
     }
 
@@ -406,7 +405,7 @@ class KugouApi : BaseLyricsApi {
         var albumImageUrl = imgurl
         // 确保专辑图片URL包含协议前缀
         if (!albumImageUrl.isNullOrEmpty() && !albumImageUrl.startsWith("http://") && !albumImageUrl.startsWith("https://")) {
-            albumImageUrl = "http://" + albumImageUrl
+            albumImageUrl = "http://$albumImageUrl"
         }
         Log.d(TAG, "Kugou album image URL: $albumImageUrl")
 
@@ -441,7 +440,7 @@ class KugouApi : BaseLyricsApi {
         var imageUrl = image.replace("{size}", "800")
         // 确保图片URL包含协议前缀
         if (imageUrl.isNotEmpty() && !imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
-            imageUrl = "http://" + imageUrl
+            imageUrl = "http://$imageUrl"
         }
         Log.d(TAG, "Kugou album song image URL: $imageUrl")
 

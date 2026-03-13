@@ -17,9 +17,6 @@ data class Lyrics(
     val artist: Artist? get() = info.songinfo.artist ?: tags["ar"]?.let { Artist.fromString(it) }
     val album: String? get() = info.songinfo.album ?: tags["al"]
     val id: String? get() = info.id ?: info.songinfo.id
-    val duration: Int? get() = info.duration
-
-    val originalLyrics: List<LyricsLine>? get() = data["orig"]
 
     fun isEmpty(): Boolean = data.isEmpty() || data.values.all { it.isEmpty() }
 
@@ -364,6 +361,5 @@ data class Lyrics(
         return String.format("%d:%02d:%02d.%02d", hours, minutes, seconds, centiseconds)
     }
 
-    companion object {
-    }
+    companion object
 }
