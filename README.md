@@ -75,7 +75,7 @@ cd android && gradle testDebugUnitTest
 
 ## 已知限制
 
-- **QQ 音乐搜索**：接口对无登录态客户端有服务端限制，可能整体返回 `2001`（上游 PC 版同样如此）。其余三源不受影响。
+- **QQ 音乐**：已从 `musicu.fcg`（对无登录态客户端返回 `2001`）切换到 web 接口 `search_for_qq_cp` + `lyric_download.fcg`，不再受限。歌词接口要求**数字 songid**，字母 songmid 会拿不到内容。
 - **网易云逐字**：游客登录只返回逐行 LRC，无 `yrc` 与翻译。
 - **歌单下载**只产出 `.lrc` 文件，不修改任何音频。
 - 仅打包 `arm64-v8a`，32 位设备与模拟器不支持。
@@ -84,4 +84,9 @@ cd android && gradle testDebugUnitTest
 
 GPL-3.0-only，见 [LICENSE](LICENSE)。
 
-上游 [chenmozhijin/LDDC](https://github.com/chenmozhijin/LDDC) 作者：沉默の金。本移植复用了其算法设计、字体/歌词解析规则与接口协议知识，QRC/3DES 与 KRC 解密为逐函数移植。
+上游 [chenmozhijin/LDDC](https://github.com/chenmozhijin/LDDC) 作者：沉默の金。本移植复用了其算法设计、歌词解析规则与接口协议知识，QRC/3DES 与 KRC 解密为逐函数移植。
+
+QQ 音乐 web 接口的用法参考了：
+- [ANYNC/TaskbarLyrics](https://github.com/ANYNC/TaskbarLyrics) —— 《QQ 音乐歌词获取文档》
+- [luren-dc/QQMusicApi](https://github.com/luren-dc/QQMusicApi) —— Python SDK（Lyric API / QRC 解密）
+- [xmcp/QRCD](https://github.com/xmcp/QRCD) —— QQ 音乐歌词爬取与解码

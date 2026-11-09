@@ -9,11 +9,10 @@ import org.junit.Assume.assumeNoException
 import org.junit.Test
 import org.lddc.android.data.model.LyricsType
 import org.lddc.android.data.remote.QmApi
-import org.lddc.android.data.remote.str
 import java.io.IOException
 
 /**
- * QQ 音乐真实接口集成测试：GetSession → 搜索 → 解密 QRC 取逐字歌词。
+ * QQ 音乐真实接口集成测试：search_for_qq_cp 搜索 → lyric_download 取 QRC 并解密。
  */
 class QmLiveTest {
 
@@ -37,12 +36,7 @@ class QmLiveTest {
             println("QM 首条: ${first.artistTitle()} / ${first.album} / ${first.duration}ms")
 
             val lyrics = runCatching { QmApi.getLyrics(first) }.getOrElse { error ->
-                val raw = QmApi.debugRawLyric(first)
-                val summary = raw.keys.joinToString(", ") { key ->
-                    val value = raw.str(key)
-                    if (value == null) "$key=<obj>" else "$key=${value.length}"
-                }
-                throw AssertionError("取词失败：${error.message}；原始字段：$summary", error)
+                throw AssertionError("取词失败：${error.message}", error)
             }
             assertTrue("应取到原文歌词", lyrics.get("orig").isNotEmpty())
             println(
