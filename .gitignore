@@ -1,0 +1,34 @@
+# 构建产物
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/captures/
+*.apk
+*.aab
+*.ap_
+artifacts/
+
+# 签名材料（绝不外泄）
+android/keystore/
+*.jks
+*.keystore
+*.p12
+
+# 本地配置
+android/local.properties
+local.properties
+*.iml
+.idea/
+
+# 移植参考的上游源码（GPL-3.0，请自行 clone：https://github.com/chenmozhijin/LDDC）
+upstream/
+
+# Python 工具产物
+tools/**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# 会话/临时数据
+.workbuddy/
+*.log

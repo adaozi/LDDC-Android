@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LDDC</string>
+
+    <!-- 权限引导 -->
+    <string name="perm_title">需要「所有文件访问」权限</string>
+    <string name="perm_desc">写入歌词到歌曲文件需要直接读写你音乐目录中的音频文件。授权后即可开始为本地歌曲匹配并写入歌词。</string>
+    <string name="perm_grant">去授权</string>
+    <string name="perm_granted">已授权，进入应用</string>
+    <string name="perm_hint">若找不到本应用，请在系统设置的「特殊应用权限 → 所有文件访问」中手动开启。</string>
+
+    <!-- 底部导航 -->
+    <string name="tab_search">搜索</string>
+    <string name="tab_local">本地</string>
+    <string name="tab_tools">工具</string>
+    <string name="tab_settings">设置</string>
+
+    <!-- 通用 -->
+    <string name="coming_soon">该功能正在开发中（%1$s）</string>
+</resources>

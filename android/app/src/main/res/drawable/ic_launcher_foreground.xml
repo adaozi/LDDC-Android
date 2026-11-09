@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 歌词条（三条，代表逐行歌词） -->
+    <path
+        android:fillColor="#FF8AB4F8"
+        android:pathData="M32,40 h44 a3,3 0 0 1 0,6 h-44 a3,3 0 0 1 0,-6 z" />
+    <path
+        android:fillColor="#FF6B9FE8"
+        android:pathData="M32,52 h32 a3,3 0 0 1 0,6 h-32 a3,3 0 0 1 0,-6 z" />
+    <path
+        android:fillColor="#FF4F7FD0"
+        android:pathData="M32,64 h22 a3,3 0 0 1 0,6 h-22 a3,3 0 0 1 0,-6 z" />
+    <!-- 右侧音符 -->
+    <path
+        android:fillColor="#FFF2B84B"
+        android:pathData="M66,44 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <path
+        android:fillColor="#FFF2B84B"
+        android:pathData="M70,44 h4 v24 a4,4 0 0 1 -8,0 v-4 h4 z" />
+</vector>
