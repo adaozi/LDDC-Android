@@ -33,6 +33,9 @@
 ## 构建
 
 ```bash
+git clone --recursive <本仓库>   # taglib 2.3.2 是 submodule，必须带 --recursive
+# 已有克隆的话：git submodule update --init --recursive
+
 # 需要 JDK 17、Android SDK（compileSdk 34）、NDK 27
 cd android
 gradle assembleDebug     # 调试包（包名带 .debug 后缀，可与正式包共存）
