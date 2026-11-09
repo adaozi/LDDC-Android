@@ -16,8 +16,8 @@ android {
         applicationId = "org.lddc.android"
         minSdk = 26
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.0.4"
+        versionCode = 7
+        versionName = "1.1.0"
 
         ndk {
             // 只保留真机主流 ABI，控制包体

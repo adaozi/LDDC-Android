@@ -180,6 +180,11 @@ fun SearchScreen(viewModel: SearchViewModel = viewModel()) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                     }
                 }
+                if (state.hasMore || state.loadingMore) {
+                    item(key = "load_more_footer") {
+                        LoadMoreFooter(loading = state.loadingMore, onLoadMore = viewModel::loadMore)
+                    }
+                }
             }
         }
     }
@@ -231,6 +236,22 @@ private fun SongRow(song: SongInfo, onClick: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+@Composable
+private fun LoadMoreFooter(loading: Boolean, onLoadMore: () -> Unit) {
+    // 只有滚到底部（footer 进入组合）时才自动加载下一页
+    LaunchedEffect(Unit) { onLoadMore() }
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (loading) {
+            CircularProgressIndicator(modifier = Modifier.height(24.dp))
+        } else {
+            TextButton(onClick = onLoadMore) { Text("加载更多") }
         }
     }
 }

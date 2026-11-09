@@ -46,6 +46,9 @@ data class SearchUiState(
     val searchType: SearchType = SearchType.SONG,
     val selectedSources: Set<Source> = setOf(Source.QM, Source.KG, Source.NE),
     val loading: Boolean = false,
+    val loadingMore: Boolean = false,
+    val page: Int = 1,
+    val hasMore: Boolean = false,
     val results: List<SongInfo> = emptyList(),
     val songLists: List<SongListInfo> = emptyList(),
     val error: String? = null,
@@ -90,18 +93,27 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         val sources = current.selectedSources
         if (sources.isEmpty()) return
 
-        if (current.searchType == SearchType.SONG) searchSongs(keyword, sources) else searchSongLists(keyword, sources, current.searchType)
+        if (current.searchType == SearchType.SONG) {
+            searchSongs(keyword, sources, page = 1, append = false)
+        } else {
+            searchSongLists(keyword, sources, current.searchType, page = 1, append = false)
+        }
     }
 
-    private fun searchSongs(keyword: String, sources: Set<Source>) {
+    private fun searchSongs(keyword: String, sources: Set<Source>, page: Int, append: Boolean) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null, results = emptyList(), songLists = emptyList(), sourceErrors = emptyMap()) }
+            if (append) {
+                if (_state.value.loadingMore) return@launch
+                _state.update { it.copy(loadingMore = true) }
+            } else {
+                _state.update { it.copy(loading = true, error = null, results = emptyList(), songLists = emptyList(), sourceErrors = emptyMap(), hasMore = false) }
+            }
             val settings = settingsRepository.current()
             val ordered = settings.sourcePriority.filter { it in sources && LyricsRepository.isAvailable(it) }
 
             val outcomes = coroutineScope {
                 ordered.map { source ->
-                    async { source to runCatching { LyricsRepository.searchSongs(source, keyword) } }
+                    async { source to runCatching { LyricsRepository.searchSongs(source, keyword, page) } }
                 }.awaitAll()
             }
 
@@ -109,22 +121,45 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             val sourceErrors = outcomes
                 .mapNotNull { (source, result) -> result.exceptionOrNull()?.let { source to friendlyError(it) } }
                 .toMap()
-            val merged = interleave(groups)
+            val fetched = interleave(groups)
 
-            _state.update {
-                it.copy(
+            _state.update { current ->
+                val merged = if (append) current.results + fetched else fetched
+                current.copy(
                     loading = false,
+                    loadingMore = false,
+                    page = page,
+                    hasMore = fetched.isNotEmpty(),
                     results = merged,
-                    error = summaryOf(merged.isNotEmpty(), sourceErrors),
-                    sourceErrors = sourceErrors,
+                    error = if (append) current.error else summaryOf(merged.isNotEmpty(), sourceErrors),
+                    sourceErrors = if (append) current.sourceErrors else sourceErrors,
                 )
             }
         }
     }
 
-    private fun searchSongLists(keyword: String, sources: Set<Source>, type: SearchType) {
+    /** 滚到底部时加载下一页 */
+    fun loadMore() {
+        val current = _state.value
+        if (current.loading || current.loadingMore || !current.hasMore) return
+        val keyword = current.keyword.trim()
+        if (keyword.isEmpty()) return
+        val nextPage = current.page + 1
+        if (current.searchType == SearchType.SONG) {
+            searchSongs(keyword, current.selectedSources, nextPage, append = true)
+        } else {
+            searchSongLists(keyword, current.selectedSources, current.searchType, nextPage, append = true)
+        }
+    }
+
+    private fun searchSongLists(keyword: String, sources: Set<Source>, type: SearchType, page: Int, append: Boolean) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null, results = emptyList(), songLists = emptyList(), sourceErrors = emptyMap()) }
+            if (append) {
+                if (_state.value.loadingMore) return@launch
+                _state.update { it.copy(loadingMore = true) }
+            } else {
+                _state.update { it.copy(loading = true, error = null, results = emptyList(), songLists = emptyList(), sourceErrors = emptyMap(), hasMore = false) }
+            }
             val settings = settingsRepository.current()
             val ordered = settings.sourcePriority.filter {
                 it in sources && LyricsRepository.isAvailable(it) && type in LyricsRepository.supportedSearchTypes(it)
@@ -136,21 +171,25 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
             val outcomes = coroutineScope {
                 ordered.map { source ->
-                    async { source to runCatching { LyricsRepository.searchSongLists(source, keyword, type) } }
+                    async { source to runCatching { LyricsRepository.searchSongLists(source, keyword, type, page) } }
                 }.awaitAll()
             }
 
             val errors = outcomes
                 .mapNotNull { (source, result) -> result.exceptionOrNull()?.let { source to friendlyError(it) } }
                 .toMap()
-            val merged = outcomes.flatMap { it.second.getOrNull().orEmpty() }
+            val fetched = outcomes.flatMap { it.second.getOrNull().orEmpty() }
 
-            _state.update {
-                it.copy(
+            _state.update { current ->
+                val merged = if (append) current.songLists + fetched else fetched
+                current.copy(
                     loading = false,
+                    loadingMore = false,
+                    page = page,
+                    hasMore = fetched.isNotEmpty(),
                     songLists = merged,
-                    error = summaryOf(merged.isNotEmpty(), errors),
-                    sourceErrors = errors,
+                    error = if (append) current.error else summaryOf(merged.isNotEmpty(), errors),
+                    sourceErrors = if (append) current.sourceErrors else errors,
                 )
             }
         }

@@ -66,4 +66,23 @@ class KgLiveTest {
 
         }
     }
+
+    @Test
+    fun `search pagination returns different pages`() {
+        runBlocking {
+            val page1 = try {
+                KgApi.searchSongs("lemon", 1)
+            } catch (e: Exception) {
+                assumeNoException("跳过: ${e.message}", e)
+                return@runBlocking
+            }
+            val page2 = KgApi.searchSongs("lemon", 2)
+            println("KG 分页: page1=${page1.size} page2=${page2.size}")
+            assertTrue("第 1 页应有结果", page1.isNotEmpty())
+            assertTrue("第 2 页应有结果", page2.isNotEmpty())
+            val ids1 = page1.mapNotNull { it.id }.toSet()
+            val ids2 = page2.mapNotNull { it.id }.toSet()
+            assertTrue("两页结果不应重复", ids1.intersect(ids2).isEmpty())
+        }
+    }
 }
