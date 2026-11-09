@@ -47,4 +47,23 @@ class KgLiveTest {
             )
         }
     }
+
+    @Test
+    fun `lyrics list returns multiple candidates`() {
+        runBlocking {
+            val songs = try {
+                KgApi.searchSongs("夜曲 周杰伦")
+            } catch (e: Exception) {
+                assumeNoException("跳过: ${e.message}", e)
+                return@runBlocking
+            }
+            val first = songs.firstOrNull() ?: return@runBlocking
+            val candidates = KgApi.getLyricsList(first)
+            println("KG 歌词候选数=${candidates.size} " + candidates.take(3).joinToString(" | ") {
+                "${it.creator}/${it.score}"
+            })
+            assertTrue("应能拿到歌词候选列表", candidates.isNotEmpty())
+
+        }
+    }
 }

@@ -191,6 +191,9 @@ fun SearchScreen(viewModel: SearchViewModel = viewModel()) {
             onDismiss = viewModel::closePreview,
             onPickFile = { uri, name -> viewModel.saveToFile(uri, name) },
             onTranslate = viewModel::translatePreview,
+            onLoadCandidates = viewModel::loadCandidates,
+            onSelectCandidate = viewModel::selectCandidate,
+            onHideCandidates = viewModel::hideCandidates,
         )
     }
 }
@@ -279,6 +282,9 @@ private fun PreviewDialog(
     onDismiss: () -> Unit,
     onPickFile: (Uri, String) -> Unit,
     onTranslate: () -> Unit,
+    onLoadCandidates: () -> Unit,
+    onSelectCandidate: (org.lddc.android.data.model.LyricInfo) -> Unit,
+    onHideCandidates: () -> Unit,
 ) {
     val context = LocalContext.current
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -330,6 +336,10 @@ private fun PreviewDialog(
                 ) {
                     TextButton(onClick = onDismiss) { Text("关闭") }
                     TextButton(
+                        enabled = !preview.loading && !preview.loadingCandidates,
+                        onClick = onLoadCandidates,
+                    ) { Text(if (preview.loadingCandidates) "查询中…" else "换版本") }
+                    TextButton(
                         enabled = !preview.loading && preview.lyrics != null && !preview.translating,
                         onClick = onTranslate,
                     ) { Text(if (preview.translating) "翻译中…" else "翻译") }
@@ -343,6 +353,66 @@ private fun PreviewDialog(
             }
         }
     }
+
+    if (preview.showCandidates && preview.candidates.isNotEmpty()) {
+        CandidateDialog(
+            candidates = preview.candidates,
+            onSelect = onSelectCandidate,
+            onDismiss = onHideCandidates,
+        )
+    }
+}
+
+@Composable
+private fun CandidateDialog(
+    candidates: List<org.lddc.android.data.model.LyricInfo>,
+    onSelect: (org.lddc.android.data.model.LyricInfo) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("选择歌词版本", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(8.dp))
+                LazyColumn(modifier = Modifier.heightIn(max = 380.dp).fillMaxWidth()) {
+                    items(candidates, key = { it.id ?: it.creator.orEmpty() + it.duration }) { candidate ->
+                        Surface(
+                            onClick = { onSelect(candidate) },
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+                                Text(
+                                    text = candidate.creator?.takeIf { it.isNotBlank() } ?: "未知上传者",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = listOfNotNull(
+                                        candidate.score?.let { "评分 $it" },
+                                        candidate.duration?.let { formatMs(it) },
+                                    ).joinToString(" · "),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("取消") }
+                }
+            }
+        }
+    }
+}
+
+private fun formatMs(ms: Int): String {
+    val totalSeconds = ms / 1000
+    return "%d:%02d".format(totalSeconds / 60, totalSeconds % 60)
 }
 
 private fun queryDisplayName(context: Context, uri: Uri): String? =

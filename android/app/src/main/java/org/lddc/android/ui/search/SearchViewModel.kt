@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lddc.android.BuildConfig
 import org.lddc.android.data.converter.LyricsConverter
+import org.lddc.android.data.model.LyricInfo
 import org.lddc.android.data.model.SearchType
 import org.lddc.android.data.model.SongInfo
 import org.lddc.android.data.model.SongListInfo
@@ -35,6 +36,9 @@ data class PreviewState(
     val sylt: SyltPayload? = null,
     val lyrics: org.lddc.android.data.model.Lyrics? = null,
     val translating: Boolean = false,
+    val candidates: List<LyricInfo> = emptyList(),
+    val loadingCandidates: Boolean = false,
+    val showCandidates: Boolean = false,
 )
 
 data class SearchUiState(
@@ -219,36 +223,89 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         _state.update { it.copy(preview = PreviewState(song = song)) }
         viewModelScope.launch {
             runCatching { LyricsRepository.getLyrics(song) }
-                .onSuccess { lyrics ->
-                    val settings = settingsRepository.current()
-                    val langs = settings.langsOrder.filter { lyrics.has(it) }.ifEmpty { listOf("orig") }
-                    val text = runCatching {
-                        LyricsConverter.convert(
-                            lyrics = lyrics,
-                            format = settings.lyricsFormat,
-                            langs = langs,
-                            msDigitCount = 3,
-                            tool = "LDDC Android ${BuildConfig.VERSION_NAME}",
-                        )
-                    }.getOrElse { "" }
-                    val sylt = LyricsSaver.buildSyltPayload(lyrics.fsLyrics().get("orig").orEmpty())
-                    _state.update {
-                        it.copy(
-                            preview = PreviewState(
-                                song = song,
-                                loading = false,
-                                lyricsText = text,
-                                error = if (text.isBlank()) "该源没有返回可用歌词" else null,
-                                sylt = sylt,
-                                lyrics = lyrics,
-                            ),
-                        )
-                    }
-                }
+                .onSuccess { lyrics -> renderLyrics(song, lyrics) }
                 .onFailure { error ->
                     _state.update {
                         it.copy(
                             preview = PreviewState(song = song, loading = false, error = error.message ?: "获取歌词失败"),
+                        )
+                    }
+                }
+        }
+    }
+
+    /** 渲染歌词到预览状态（首次打开、换版本共用） */
+    private suspend fun renderLyrics(song: SongInfo, lyrics: org.lddc.android.data.model.Lyrics, keepCandidates: Boolean = true) {
+        val settings = settingsRepository.current()
+        val langs = settings.langsOrder.filter { lyrics.has(it) }.ifEmpty { listOf("orig") }
+        val text = runCatching {
+            LyricsConverter.convert(
+                lyrics = lyrics,
+                format = settings.lyricsFormat,
+                langs = langs,
+                msDigitCount = 3,
+                tool = "LDDC Android ${BuildConfig.VERSION_NAME}",
+            )
+        }.getOrElse { "" }
+        val sylt = LyricsSaver.buildSyltPayload(lyrics.fsLyrics().get("orig").orEmpty())
+        val cached = _state.value.preview
+        _state.update {
+            it.copy(
+                preview = PreviewState(
+                    song = song,
+                    loading = false,
+                    lyricsText = text,
+                    error = if (text.isBlank()) "该源没有返回可用歌词" else null,
+                    sylt = sylt,
+                    lyrics = lyrics,
+                    candidates = if (keepCandidates) cached?.candidates.orEmpty() else emptyList(),
+                ),
+            )
+        }
+    }
+
+    /** 拉取该歌曲在同一源下的其它歌词版本 */
+    fun loadCandidates() {
+        val preview = _state.value.preview ?: return
+        if (preview.loadingCandidates) return
+        viewModelScope.launch {
+            _state.update { it.copy(preview = preview.copy(loadingCandidates = true)) }
+            val list = runCatching { LyricsRepository.getLyricsList(preview.song.source, preview.song) }
+                .getOrNull().orEmpty()
+            _state.update {
+                it.copy(
+                    preview = preview.copy(
+                        loadingCandidates = false,
+                        candidates = list,
+                        showCandidates = list.size > 1,
+                    ),
+                    message = when {
+                        list.isEmpty() -> "${preview.song.source.displayName}没有可选版本"
+                        list.size == 1 -> "该源只有一个版本（上传者信息可能为空）"
+                        else -> null
+                    },
+                )
+            }
+        }
+    }
+
+    fun hideCandidates() {
+        val preview = _state.value.preview ?: return
+        _state.update { it.copy(preview = preview.copy(showCandidates = false)) }
+    }
+
+    fun selectCandidate(candidate: LyricInfo) {
+        val preview = _state.value.preview ?: return
+        _state.update {
+            it.copy(preview = preview.copy(showCandidates = false, loading = true, error = null))
+        }
+        viewModelScope.launch {
+            runCatching { LyricsRepository.getLyrics(candidate) }
+                .onSuccess { lyrics -> renderLyrics(preview.song, lyrics) }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            preview = preview.copy(loading = false, error = error.message ?: "该版本取词失败"),
                         )
                     }
                 }
@@ -260,6 +317,10 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         val lyrics = preview.lyrics ?: return
         if (preview.translating) return
         viewModelScope.launch {
+            if (preview.lyrics.has("ts")) {
+                _state.update { it.copy(message = "该源已自带译文，无需翻译") }
+                return@launch
+            }
             _state.update { it.copy(preview = preview.copy(translating = true)) }
             val settings = settingsRepository.current()
             LyricsTranslator.translate(lyrics, settings).fold(

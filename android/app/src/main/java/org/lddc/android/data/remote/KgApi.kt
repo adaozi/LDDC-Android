@@ -354,6 +354,29 @@ object KgApi : LyricsSource {
         mutex.withLock { fetchLyricsListInternal(song) }
     }
 
+    /** 调试用：返回歌词候选项的原始响应文本 */
+    internal suspend fun debugLyricCandidates(song: SongInfo): String = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val keyword = "${song.strArtist} - ${song.title.orEmpty()}"
+            val params = linkedMapOf(
+                "album_audio_id" to (song.id ?: ""),
+                "duration" to (song.duration?.toString() ?: ""),
+                "hash" to (song.hash ?: ""),
+                "keyword" to keyword,
+                "lrctxt" to "1",
+                "man" to "no",
+            )
+            val builder = URL_LYRIC_SEARCH.toHttpUrl().newBuilder()
+            val now = System.currentTimeMillis()
+            val mid = md5(now.toString())
+            val finalParams = linkedMapOf("appid" to "3116", "clientver" to "11070")
+            finalParams.putAll(params)
+            finalParams["signature"] = sign(finalParams, null)
+            finalParams.forEach { (k, v) -> builder.addQueryParameter(k, v) }
+            Http.get(builder.build().toString(), listOf("mid" to mid)).text
+        }
+    }
+
     /** 注意：本函数不加锁（getLyrics 已在锁内调用它，Mutex 不可重入） */
     private fun fetchLyricsListInternal(song: SongInfo): List<LyricInfo> {
         val keyword = buildString {
