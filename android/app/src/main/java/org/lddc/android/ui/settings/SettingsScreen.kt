@@ -198,6 +198,39 @@ fun SettingsScreen(repository: SettingsRepository) {
                     onCheckedChange = { v -> mutate { it.copy(skipExistingLyrics = v) } },
                 )
                 SettingSwitchRow(
+                    title = "逐字歌词才跳过",
+                    subtitle = if (settings.skipExistingLyrics) {
+                        "已有逐行/纯文本歌词时不跳过，重新匹配并覆盖"
+                    } else {
+                        "需先开启「跳过已有歌词的歌曲」"
+                    },
+                    checked = settings.refreshNonVerbatimLyrics,
+                    enabled = settings.skipExistingLyrics,
+                    onCheckedChange = { v -> mutate { it.copy(refreshNonVerbatimLyrics = v) } },
+                )
+                if (settings.skipExistingLyrics && settings.refreshNonVerbatimLyrics && !settings.lyricsFormat.isWordLevel) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = lddc.warning.copy(alpha = 0.10f),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(start = Space.md, end = Space.sm, top = Space.sm, bottom = Space.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "当前输出格式是「${settings.lyricsFormat.displayName}」，写进去仍会被判为非逐字，下次会重复匹配。",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = lddc.warning,
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(onClick = { mutate { it.copy(lyricsFormat = LyricsFormat.VERBATIM_LRC) } }) {
+                                Text("改为逐字", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
+                }
+                SettingSwitchRow(
                     title = "跳过纯音乐",
                     subtitle = "匹配结果被标记为纯音乐时跳过",
                     checked = settings.skipInstrumental,

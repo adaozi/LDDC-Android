@@ -36,6 +36,7 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.ENABLED_SOURCES] = next.enabledSources.joinToString(",") { it.name }
             prefs[Keys.MIN_SCORE] = next.minScore
             prefs[Keys.SKIP_EXISTING] = next.skipExistingLyrics
+            prefs[Keys.REFRESH_NON_VERBATIM] = next.refreshNonVerbatimLyrics
             prefs[Keys.SKIP_INST] = next.skipInstrumental
             prefs[Keys.CONCURRENCY] = next.concurrency
             prefs[Keys.SAVE_MODE] = next.saveMode.name
@@ -71,6 +72,7 @@ class SettingsRepository(private val context: Context) {
                 ?: d.enabledSources,
             minScore = this[Keys.MIN_SCORE] ?: d.minScore,
             skipExistingLyrics = this[Keys.SKIP_EXISTING] ?: d.skipExistingLyrics,
+            refreshNonVerbatimLyrics = this[Keys.REFRESH_NON_VERBATIM] ?: d.refreshNonVerbatimLyrics,
             skipInstrumental = this[Keys.SKIP_INST] ?: d.skipInstrumental,
             concurrency = (this[Keys.CONCURRENCY] ?: d.concurrency).coerceIn(1, 16),
             saveMode = enumOrDefault(this[Keys.SAVE_MODE], d.saveMode),
@@ -99,6 +101,7 @@ class SettingsRepository(private val context: Context) {
         val ENABLED_SOURCES = stringPreferencesKey("enabled_sources")
         val MIN_SCORE = intPreferencesKey("min_score")
         val SKIP_EXISTING = booleanPreferencesKey("skip_existing_lyrics")
+        val REFRESH_NON_VERBATIM = booleanPreferencesKey("refresh_non_verbatim_lyrics")
         val SKIP_INST = booleanPreferencesKey("skip_instrumental")
         val CONCURRENCY = intPreferencesKey("concurrency")
         val SAVE_MODE = stringPreferencesKey("save_mode")

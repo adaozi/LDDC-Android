@@ -24,6 +24,9 @@ enum class LyricsFormat(val displayName: String, val ext: String) {
     ;
 
     val isLrc: Boolean get() = this == VERBATIM_LRC || this == LINE_BY_LINE_LRC || this == ENHANCED_LRC
+
+    /** 输出里是否含字级时间戳（逐字 LRC / 增强型 LRC） */
+    val isWordLevel: Boolean get() = this == VERBATIM_LRC || this == ENHANCED_LRC
 }
 
 /** 保存方式，对应上游 LocalMatchSave2TagMode */

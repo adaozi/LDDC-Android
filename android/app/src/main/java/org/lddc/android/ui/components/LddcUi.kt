@@ -324,9 +324,11 @@ fun SettingSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
+    val alpha = if (enabled) 1f else 0.45f
     Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 9.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 9.dp).alpha(alpha),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -340,7 +342,7 @@ fun SettingSwitchRow(
             }
         }
         Spacer(Modifier.width(Space.md))
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
 

@@ -5,6 +5,7 @@ package org.lddc.android.domain
 import org.lddc.android.data.converter.LyricsConverter
 import org.lddc.android.data.model.SongInfo
 import org.lddc.android.data.model.Source
+import org.lddc.android.data.parser.VerbatimDetector
 import org.lddc.android.data.settings.AppSettings
 import org.lddc.android.data.tag.AudioTagRepository
 import org.lddc.android.data.tag.WriteResult
@@ -57,10 +58,42 @@ object LocalMatchEngine {
 
     data class MatchOutcome(val status: Status, val detail: String)
 
-    suspend fun matchOne(file: File, settings: AppSettings, sources: List<Source>): MatchOutcome {
-        if (settings.skipExistingLyrics && AudioTagRepository.hasLyrics(file)) {
-            return MatchOutcome(Status.SKIPPED, "已有歌词")
+    /** 现有歌词的处理结论 */
+    private sealed interface Existing {
+        data object None : Existing
+        data class Keep(val detail: String) : Existing
+        data object Replace : Existing
+    }
+
+    /**
+     * 检查歌曲里已有的歌词：
+     * - 未开启「跳过已有歌词」→ 不管；
+     * - 开启了但未开启「非逐字重匹配」→ 有歌词就跳过（与原行为一致）；
+     * - 两者都开启 → 逐字才跳过，逐行/纯文本判为覆盖。
+     * 读取失败（有歌词但解析不出来）时选择保留，避免异常情况下反复覆盖。
+     */
+    private fun inspectExisting(file: File, settings: AppSettings): Existing {
+        if (!settings.skipExistingLyrics) return Existing.None
+        if (!settings.refreshNonVerbatimLyrics) {
+            return if (AudioTagRepository.hasLyrics(file)) Existing.Keep("已有歌词") else Existing.None
         }
+        val existing = AudioTagRepository.readLyrics(file)
+        if (existing.isNullOrBlank()) {
+            return if (AudioTagRepository.hasLyrics(file)) Existing.Keep("已有歌词（无法解析）") else Existing.None
+        }
+        return if (VerbatimDetector.isVerbatim(existing)) {
+            Existing.Keep("已有逐字歌词")
+        } else {
+            Existing.Replace
+        }
+    }
+
+    suspend fun matchOne(file: File, settings: AppSettings, sources: List<Source>): MatchOutcome {
+        val existing = inspectExisting(file, settings)
+        if (existing is Existing.Keep) {
+            return MatchOutcome(Status.SKIPPED, existing.detail)
+        }
+        val replacingNonVerbatim = existing is Existing.Replace
 
         val localInfo = readSongInfo(file)
         val match = AutoFetch.fetch(localInfo, sources, settings.minScore.toDouble())
@@ -98,6 +131,7 @@ object LocalMatchEngine {
             }
         }
 
-        return MatchOutcome(Status.SUCCESS, "${match.song.source.displayName} · ${match.song.artistTitle()}")
+        val prefix = if (replacingNonVerbatim) "覆盖非逐字 · " else ""
+        return MatchOutcome(Status.SUCCESS, prefix + "${match.song.source.displayName} · ${match.song.artistTitle()}")
     }
 }

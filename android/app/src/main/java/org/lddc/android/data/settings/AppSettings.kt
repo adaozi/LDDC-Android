@@ -20,7 +20,10 @@ data class AppSettings(
     // 参与搜索的源集合
     val enabledSources: Set<Source> = setOf(Source.QM, Source.KG, Source.NE, Source.LRCLIB),
     // 匹配
-    val minScore: Int = 55,    val skipExistingLyrics: Boolean = true,
+    val minScore: Int = 55,
+    val skipExistingLyrics: Boolean = true,
+    // 已有歌词不是逐字（逐行/纯文本）时重新匹配并覆盖
+    val refreshNonVerbatimLyrics: Boolean = false,
     val skipInstrumental: Boolean = true,
     val concurrency: Int = 4,
     // 保存
