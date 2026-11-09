@@ -46,6 +46,7 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.SAVE_DIR_MODE] = next.saveDirMode.name
             prefs[Keys.SAVE_ROOT] = next.saveRootPath
             prefs[Keys.FILE_NAME_FORMAT] = next.fileNameFormat
+            prefs[Keys.LOCAL_MUSIC_PATH] = next.localMusicPath
             prefs[Keys.LANGS_ORDER] = next.langsOrder.joinToString(",")
             prefs[Keys.TRANSLATE_BACKEND] = next.translateBackend.name
             prefs[Keys.TRANSLATE_TARGET] = next.translateTargetLang
@@ -80,6 +81,7 @@ class SettingsRepository(private val context: Context) {
             saveDirMode = enumOrDefault(this[Keys.SAVE_DIR_MODE], d.saveDirMode),
             saveRootPath = this[Keys.SAVE_ROOT] ?: d.saveRootPath,
             fileNameFormat = this[Keys.FILE_NAME_FORMAT] ?: d.fileNameFormat,
+            localMusicPath = this[Keys.LOCAL_MUSIC_PATH] ?: d.localMusicPath,
             langsOrder = this[Keys.LANGS_ORDER]?.split(',')?.filter { it.isNotBlank() } ?: d.langsOrder,
             translateBackend = enumOrDefault(this[Keys.TRANSLATE_BACKEND], d.translateBackend),
             translateTargetLang = this[Keys.TRANSLATE_TARGET] ?: d.translateTargetLang,
@@ -107,6 +109,7 @@ class SettingsRepository(private val context: Context) {
         val SAVE_DIR_MODE = stringPreferencesKey("save_dir_mode")
         val SAVE_ROOT = stringPreferencesKey("save_root_path")
         val FILE_NAME_FORMAT = stringPreferencesKey("file_name_format")
+        val LOCAL_MUSIC_PATH = stringPreferencesKey("local_music_path")
         val LANGS_ORDER = stringPreferencesKey("langs_order")
         val TRANSLATE_BACKEND = stringPreferencesKey("translate_backend")
         val TRANSLATE_TARGET = stringPreferencesKey("translate_target_lang")

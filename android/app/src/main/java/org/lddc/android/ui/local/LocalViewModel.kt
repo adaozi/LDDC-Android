@@ -37,6 +37,14 @@ class LocalViewModel(application: Application) : AndroidViewModel(application) {
     val state: StateFlow<LocalUiState> = _state.asStateFlow()
 
     init {
+        // 恢复上次使用的目录，并直接列出内容，省掉一次「选择目录 + 扫描」
+        viewModelScope.launch {
+            val saved = settingsRepository.current().localMusicPath
+            if (saved.isNotBlank() && _state.value.items.isEmpty()) {
+                _state.update { it.copy(rootPath = saved) }
+                scan()
+            }
+        }
         // 批量任务由 BatchController 持有，页面退出/切后台仍继续
         viewModelScope.launch {
             BatchController.state.collect { batch ->
@@ -69,6 +77,8 @@ class LocalViewModel(application: Application) : AndroidViewModel(application) {
                 _state.update { it.copy(scanning = false, message = "目录不存在：$root") }
                 return@launch
             }
+            // 记住这次使用的目录（下次启动自动沿用）
+            settingsRepository.update { it.copy(localMusicPath = root) }
             val files = withContext(Dispatchers.IO) { LocalMatchEngine.scan(dir) }
             _state.update {
                 it.copy(
@@ -85,7 +95,11 @@ class LocalViewModel(application: Application) : AndroidViewModel(application) {
     fun start() {
         val items = _state.value.items
         if (items.isEmpty() || BatchController.isRunning()) return
+        startItems(items.mapNotNull { it.file })
+    }
 
+    private fun startItems(files: List<File>) {
+        if (files.isEmpty()) return
         viewModelScope.launch {
             val settings = settingsRepository.current()
             val sources = settings.sourcePriority.filter {
@@ -99,11 +113,29 @@ class LocalViewModel(application: Application) : AndroidViewModel(application) {
             }
             BatchController.startFiles(
                 context = getApplication(),
-                files = items.mapNotNull { it.file },
+                files = files,
                 settings = settings,
                 sources = sources,
             )
         }
+    }
+
+    /** 只重跑上次未成功的条目（未找到 / 写入失败） */
+    fun retryFailed() {
+        val targets = _state.value.items.filter {
+            it.status == LocalMatchEngine.Status.NOT_FOUND || it.status == LocalMatchEngine.Status.FAILED
+        }
+        if (targets.isEmpty() || BatchController.isRunning()) return
+        _state.update { st ->
+            st.copy(
+                items = st.items.map { item ->
+                    if (targets.any { it.key == item.key }) item.copy(status = LocalMatchEngine.Status.PENDING, detail = "") else item
+                },
+                done = st.items.size - targets.size,
+                total = st.items.size,
+            )
+        }
+        startItems(targets.mapNotNull { it.file })
     }
 
     fun stop() = BatchController.stop(getApplication())

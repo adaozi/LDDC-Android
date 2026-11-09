@@ -20,8 +20,7 @@ data class AppSettings(
     // 参与搜索的源集合
     val enabledSources: Set<Source> = setOf(Source.QM, Source.KG, Source.NE, Source.LRCLIB),
     // 匹配
-    val minScore: Int = 55,
-    val skipExistingLyrics: Boolean = true,
+    val minScore: Int = 55,    val skipExistingLyrics: Boolean = true,
     val skipInstrumental: Boolean = true,
     val concurrency: Int = 4,
     // 保存
@@ -34,6 +33,8 @@ data class AppSettings(
     val saveDirMode: SaveDirMode = SaveDirMode.SONG,
     val saveRootPath: String = "",
     val fileNameFormat: String = "%<artist> - %<title>",
+    // 上次使用的本地扫描目录（记住用户选择，下次启动直接沿用）
+    val localMusicPath: String = "",
     // 歌词组合，顺序即渲染顺序（上游默认 roma, orig, ts）
     val langsOrder: List<String> = listOf("orig", "ts", "roma"),
     // 翻译
