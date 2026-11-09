@@ -27,6 +27,7 @@ data class LocalUiState(
     val done: Int = 0,
     val total: Int = 0,
     val message: String? = null,
+    val taskTitle: String = "",
 )
 
 class LocalViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,6 +47,7 @@ class LocalViewModel(application: Application) : AndroidViewModel(application) {
                         done = batch.done,
                         total = batch.total,
                         running = batch.running,
+                        taskTitle = batch.title,
                         message = batch.message ?: it.message,
                     )
                 }

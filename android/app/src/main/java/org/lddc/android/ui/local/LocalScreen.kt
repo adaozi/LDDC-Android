@@ -101,6 +101,15 @@ fun LocalScreen(viewModel: LocalViewModel = viewModel()) {
 
             if (state.total > 0) {
                 Spacer(Modifier.height(10.dp))
+                if (state.taskTitle.isNotBlank()) {
+                    Text(
+                        text = "任务：${state.taskTitle}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Text(
                     text = "进度 ${state.done} / ${state.total}",
                     style = MaterialTheme.typography.bodySmall,
