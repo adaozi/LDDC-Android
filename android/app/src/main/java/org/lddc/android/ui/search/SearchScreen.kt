@@ -6,6 +6,11 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +43,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Search
@@ -63,8 +69,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -79,6 +87,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.lddc.android.data.model.SearchType
 import org.lddc.android.data.model.SongInfo
@@ -105,13 +114,14 @@ fun SearchScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val focus = LocalFocusManager.current
-    val scope = rememberCoroutineScope()
+    val sheetOpen = state.preview != null
 
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.dismissMessage()
-        }
+    // 抽屉是一次独立的窗口，页面级 Snackbar 会被它盖住 —— 打开时交给抽屉内的 host 显示
+    LaunchedEffect(state.message, sheetOpen) {
+        val message = state.message ?: return@LaunchedEffect
+        if (sheetOpen) return@LaunchedEffect
+        viewModel.dismissMessage()
+        snackbarHostState.showSnackbar(message)
     }
 
     Column(modifier = Modifier.fillMaxSize().imePadding()) {
@@ -268,13 +278,14 @@ fun SearchScreen(
         PreviewSheet(
             preview = preview,
             saving = state.saving,
+            message = state.message,
+            onMessageShown = viewModel::dismissMessage,
             onDismiss = viewModel::closePreview,
             onPickFile = { uri, name -> viewModel.saveToFile(uri, name) },
             onTranslate = viewModel::translatePreview,
             onLoadCandidates = viewModel::loadCandidates,
             onSelectCandidate = viewModel::selectCandidate,
             onHideCandidates = viewModel::hideCandidates,
-            onCopy = { scope.launch { snackbarHostState.showSnackbar("歌词已复制") } },
         )
     }
 }
@@ -501,18 +512,34 @@ private fun DownloadProgressCard(title: String, done: Int, total: Int) {
 private fun PreviewSheet(
     preview: PreviewState,
     saving: Boolean,
+    message: String?,
+    onMessageShown: () -> Unit,
     onDismiss: () -> Unit,
     onPickFile: (Uri, String) -> Unit,
     onTranslate: () -> Unit,
     onLoadCandidates: () -> Unit,
     onSelectCandidate: (org.lddc.android.data.model.LyricInfo) -> Unit,
     onHideCandidates: () -> Unit,
-    onCopy: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val clipboard = LocalClipboardManager.current
+
+    // 抽屉是独立窗口，页面级 Snackbar 会被盖住；这里用抽屉内的横幅提示
+    var banner by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(message) {
+        if (message != null) {
+            onMessageShown()
+            banner = message
+        }
+    }
+    LaunchedEffect(banner) {
+        if (banner != null) {
+            delay(2800)
+            banner = null
+        }
+    }
 
     // 先播完收起动画再销毁，避免「啪」一下消失
     val closeSheet: () -> Unit = {
@@ -563,7 +590,7 @@ private fun PreviewSheet(
                 IconButton(
                     onClick = {
                         clipboard.setText(AnnotatedString(preview.lyricsText))
-                        onCopy()
+                        banner = "歌词已复制"
                     },
                     enabled = preview.lyricsText.isNotBlank(),
                 ) {
@@ -593,6 +620,39 @@ private fun PreviewSheet(
                 }
                 if (preview.lyrics?.has("roma") == true) {
                     StatusPill("含罗马音", lddc.warning)
+                }
+            }
+
+            // 操作反馈（翻译失败 / 无其它版本 / 已复制…）显示在抽屉内，不会被遮住
+            AnimatedVisibility(
+                visible = banner != null,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(top = Space.sm),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = Space.md, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(Space.sm))
+                        Text(
+                            text = banner.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
 
