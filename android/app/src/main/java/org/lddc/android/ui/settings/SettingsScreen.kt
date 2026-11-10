@@ -109,7 +109,11 @@ fun SettingsScreen(repository: SettingsRepository) {
         }
     }
 
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = Space.xl),
+        verticalArrangement = Arrangement.spacedBy(Space.lg),
+    ) {
         item(key = "header") {
             ScreenHeader(title = "设置", subtitle = "改动即时生效，下次任务自动使用")
         }
@@ -538,7 +542,6 @@ fun SettingsScreen(repository: SettingsRepository) {
             }
         }
 
-        item(key = "bottom_space") { Spacer(Modifier.height(Space.xl)) }
     }
 }
 

@@ -547,3 +547,11 @@ QmLiveTest         1 跳过（接口频控 2001）
 3. 关闭「跳过已有歌词」→ 断点失效、两首重新匹配写入。
 
 UI 文案同步：设置里「跳过已有歌词的歌曲」副标题改为「有歌词标签就不再处理；关闭后重新开始会全量重跑（忽略断点）」。
+
+---
+
+## 19. 设置页卡片间距（2026-11-10）
+
+- **现象**：设置页各分组卡片上下贴在一起，视觉上像一整块。
+- **原因**：`LazyColumn` 未设置 `verticalArrangement`，各 `SectionCard` 只给了水平 padding。
+- **修复**：`verticalArrangement = Arrangement.spacedBy(Space.lg)`（16dp）+ `contentPadding(bottom = Space.xl)`，同时删除多余的底部占位 item。
