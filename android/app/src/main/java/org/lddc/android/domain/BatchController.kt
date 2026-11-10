@@ -53,6 +53,9 @@ object BatchController {
     private const val KEY_LOCAL = "done_paths"
     private const val KEY_SONGLIST = "done_songlist"
 
+    /** 复核断点条目时的并发数（只读标签，IO 密集） */
+    private const val REVIEW_CONCURRENCY = 4
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
@@ -153,21 +156,31 @@ object BatchController {
         val finished = prefs.getStringSet(prefsKey, emptySet())?.toMutableSet() ?: mutableSetOf()
 
         val marked = items.map { item ->
-            if (item.key in finished) item.copy(status = LocalMatchEngine.Status.SUCCESS, detail = "上次已完成") else item
+            // 断点只服务于「跳过已有歌词」；用户关掉跳过后应当全量重跑
+            if (settings.skipExistingLyrics && item.key in finished) {
+                item.copy(status = LocalMatchEngine.Status.SUCCESS, detail = "上次已完成")
+            } else {
+                item
+            }
         }
-        val pending = marked.indices.filter { marked[it].status == LocalMatchEngine.Status.PENDING }
-
         _state.update {
             State(
-                running = pending.isNotEmpty(),
+                running = true,
                 title = title,
                 items = marked,
-                done = marked.size - pending.size,
+                done = marked.count { item -> item.status == LocalMatchEngine.Status.SUCCESS },
                 total = marked.size,
             )
         }
+
+        // 断点条目也要复核一次：上次写成逐行的，这次要能重新匹配，而不是永远显示「上次已完成」
+        reviewCompleted(prefs, prefsKey, finished, settings)
+
+        val pending = _state.value.items.indices.filter {
+            _state.value.items[it].status == LocalMatchEngine.Status.PENDING
+        }
         if (pending.isEmpty()) {
-            _state.update { it.copy(message = "全部已完成") }
+            _state.update { it.copy(running = false, message = "全部已完成") }
             stopServiceSafely(appContext)
             return
         }
@@ -179,8 +192,9 @@ object BatchController {
             pending.forEach { index ->
                 launch {
                     semaphore.withPermit {
+                        val item = _state.value.items.getOrNull(index) ?: return@withPermit
                         setItem(index) { it.copy(status = LocalMatchEngine.Status.MATCHING) }
-                        val outcome = runCatching { runner(marked[index], settings, sources) }
+                        val outcome = runCatching { runner(item, settings, sources) }
                             .getOrElse {
                                 LocalMatchEngine.MatchOutcome(
                                     LocalMatchEngine.Status.FAILED,
@@ -192,18 +206,19 @@ object BatchController {
                         if (outcome.status == LocalMatchEngine.Status.SUCCESS) {
                             // 立即落盘：进程被杀也不丢已完成记录
                             synchronized(finished) {
-                                finished.add(marked[index].key)
+                                finished.add(item.key)
                                 prefs.edit().putStringSet(prefsKey, HashSet(finished)).commit()
                             }
                         }
 
                         val done = _state.updateAndGetCount()
+                        val total = _state.value.total
                         BatchService.update(
                             appContext,
                             title,
-                            "$done/${marked.size}  ${marked[index].label}",
+                            "$done/$total  ${item.label}",
                             done,
-                            marked.size,
+                            total,
                         )
                     }
                 }
@@ -214,8 +229,61 @@ object BatchController {
         stopServiceSafely(appContext)
     }
 
-    fun stop(context: Context) {
-        job?.cancel()
+    /**
+     * 复核断点条目（仅在「跳过已有歌词」+「逐字歌词才跳过」都开启时执行）：
+     * - 已有逐字 → 改成「跳过 / 已有逐字歌词」
+     * - 非逐字或歌词已丢失 → 从断点里移除并回到待处理队列，重新匹配覆盖
+     * - 有标签但读不出内容 → 保留「上次已完成」
+     *
+     * 只读本地标签，不联网，1000 首也只会多花几秒。
+     */
+    private suspend fun reviewCompleted(
+        prefs: SharedPreferences,
+        prefsKey: String,
+        finished: MutableSet<String>,
+        settings: AppSettings,
+    ) {
+        if (!settings.skipExistingLyrics || !settings.refreshNonVerbatimLyrics) return
+
+        val targets = _state.value.items.indices.filter { index ->
+            val item = _state.value.items[index]
+            item.status == LocalMatchEngine.Status.SUCCESS && item.file != null
+        }
+        if (targets.isEmpty()) return
+
+        val semaphore = Semaphore(REVIEW_CONCURRENCY)
+        coroutineScope {
+            targets.forEach { index ->
+                launch {
+                    semaphore.withPermit {
+                        val item = _state.value.items.getOrNull(index) ?: return@withPermit
+                        val file = item.file ?: return@withPermit
+                        // 读取失败（文件损坏/权限）时按「保持原状」处理，不要让整批任务中断
+                        val review = runCatching { LocalMatchEngine.reviewCompleted(file) }.getOrNull()
+                        when (review) {
+                            LocalMatchEngine.CompletedReview.VERBATIM ->
+                                setItem(index) {
+                                    it.copy(status = LocalMatchEngine.Status.SKIPPED, detail = "已有逐字歌词")
+                                }
+
+                            LocalMatchEngine.CompletedReview.NEED_REMATCH -> {
+                                synchronized(finished) {
+                                    finished.remove(item.key)
+                                    prefs.edit().putStringSet(prefsKey, HashSet(finished)).commit()
+                                }
+                                setItem(index) { it.copy(status = LocalMatchEngine.Status.PENDING, detail = "") }
+                                _state.update { state -> state.copy(done = (state.done - 1).coerceAtLeast(0)) }
+                            }
+
+                            else -> Unit
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun stop(context: Context) {        job?.cancel()
         job = null
         _state.update { it.copy(running = false, message = "已停止") }
         stopServiceSafely(context.applicationContext)

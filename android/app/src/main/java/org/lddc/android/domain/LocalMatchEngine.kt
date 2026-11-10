@@ -58,6 +58,30 @@ object LocalMatchEngine {
 
     data class MatchOutcome(val status: Status, val detail: String)
 
+    /** 断点里「上次已完成」条目的复核结论 */
+    enum class CompletedReview {
+        /** 已有逐字歌词，可以继续跳过 */
+        VERBATIM,
+
+        /** 歌词非逐字或已不存在，需要重新匹配 */
+        NEED_REMATCH,
+
+        /** 有标签但读不出内容，保守保留 */
+        UNKNOWN,
+    }
+
+    /**
+     * 复核上次已完成的歌曲：断点只记了「跑过」，不代表现在还满足条件，
+     * 用户重新匹配时要把「逐行歌词」这类条目重新拉一遍。
+     */
+    fun reviewCompleted(file: File): CompletedReview {
+        val existing = AudioTagRepository.readLyrics(file)
+        if (existing.isNullOrBlank()) {
+            return if (AudioTagRepository.hasLyrics(file)) CompletedReview.UNKNOWN else CompletedReview.NEED_REMATCH
+        }
+        return if (VerbatimDetector.isVerbatim(existing)) CompletedReview.VERBATIM else CompletedReview.NEED_REMATCH
+    }
+
     /** 现有歌词的处理结论 */
     private sealed interface Existing {
         data object None : Existing

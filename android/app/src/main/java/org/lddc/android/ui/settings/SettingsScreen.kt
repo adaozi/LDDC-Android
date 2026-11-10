@@ -193,7 +193,7 @@ fun SettingsScreen(repository: SettingsRepository) {
                 )
                 SettingSwitchRow(
                     title = "跳过已有歌词的歌曲",
-                    subtitle = "歌曲里已存在歌词标签时不再处理",
+                    subtitle = "有歌词标签就不再处理；关闭后重新开始会全量重跑（忽略断点）",
                     checked = settings.skipExistingLyrics,
                     onCheckedChange = { v -> mutate { it.copy(skipExistingLyrics = v) } },
                 )
