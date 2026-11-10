@@ -2,6 +2,13 @@
 
 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，版本号沿用 `MAJOR.MINOR.PATCH`。
 
+## [Unreleased]
+
+### 变更
+
+- **应用图标重设计**：「亮度阶梯」——深蓝黑渐变底上三行歌词胶囊，当前行最亮并切分已唱/未唱两段，前后行退隐；新增 Android 13+ 主题图标（monochrome）
+- 批量任务通知改用专用单色小图标 `ic_stat_lyric`，不再复用启动图前景
+
 ## [1.1.0] - 2026-11-10
 
 界面全面重做，搜索与批量链路补齐体验细节。

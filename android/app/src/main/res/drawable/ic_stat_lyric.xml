@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 状态栏通知小图标：纯白三行歌词，系统按 alpha 渲染 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4,6.5 H16.5 A1.25,1.25 0 0 1 16.5,9 H4 A1.25,1.25 0 0 1 4,6.5 Z" />
+    <path
+        android:fillColor="#B3FFFFFF"
+        android:pathData="M4,11 H11.5 A1.25,1.25 0 0 1 11.5,13.5 H4 A1.25,1.25 0 0 1 4,11 Z" />
+    <path
+        android:fillColor="#66FFFFFF"
+        android:pathData="M4,15.5 H8.5 A1.25,1.25 0 0 1 8.5,18 H4 A1.25,1.25 0 0 1 4,15.5 Z" />
+</vector>

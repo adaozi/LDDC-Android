@@ -83,7 +83,7 @@ class BatchService : Service() {
             return NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_stat_lyric)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setProgress(total.coerceAtLeast(1), done, total == 0)
